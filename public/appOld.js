@@ -13,5 +13,4 @@ function googleLogin()
         document.write("Hello ${user.displayName}");
         console.log
     }).catch(console.log);
-
 }
