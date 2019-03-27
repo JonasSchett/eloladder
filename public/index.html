@@ -20,6 +20,27 @@
     <script defer src="/__/firebase/init.js"></script>
   </head>
   <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+        <a class="navbar-brand" href="#">Navbar</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="#">Singles</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Doubles</a>
+            </li>
+          </ul>
+          <form id="addPlayerForm" class="form-inline my-2 my-lg-0">
+            <input class="form-control mr-sm-2" type="text" name="name" placeholder="Name">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Add Player</button>
+          </form>
+        </div>
+      </nav>
     <table id = "mainTable" class="table table-dark table-striped table-hover table-borderless">
       <thead class = "thead-dark">
         <tr>
@@ -91,6 +112,7 @@
     </table>
     <div class="container">
         <button class="btn btn-dark"style= "margin-top:100px;"onclick="googleLogin()">log in with google</button>
+        <button class="btn btn-dark"style= "margin-top:100px;"onclick="passwordLogin()">log in with password</button>
         <p class = "databaseRetrieval">Database content shown here</p>
     </div>
     
