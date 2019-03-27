@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", event => {
         const data = doc.data();
         var a = document.querySelector(".databaseRetrieval");
         a.textContent = data.title;
+        
     });
     // below gets it once
     // info.get().then(doc => {
