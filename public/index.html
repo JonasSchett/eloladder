@@ -20,43 +20,46 @@
     <script defer src="/__/firebase/init.js"></script>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+    <nav id ="mainNavbar" class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+      <div>
         <a class="navbar-brand" href="#">Table Football League</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-      
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
-              <a class="nav-link" href="#">Singles</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Doubles</a>
-            </li>
-          </ul>
-          <!-- <form id="loginForm" class="form-inline my-2 my-sm-0">
-            <input class="form-control" type="text" name="name" placeholder="Name">
-            <button class="form-control btn btn-outline-success my-2 my-sm-0" type="submit">Add Player</button>
-          </form> -->
-          <form id="addPlayerForm" class="input-group mb-3 my-2 mx-2">
-            <input type="text" name="name" class="form-control" placeholder="Name" aria-label="Recipient's username" aria-describedby="basic-addon2">
-            <div class="input-group-append">
-              <button class="btn btn-outline-secondary" type="submit">Add player</button>
-            </div>
-          </form>
-          <form id="loginForm" class="input-group mb-3 my-2 mx-2">
-            <input type="password" name="password" class="form-control" placeholder="password" aria-label="Recipient's username" aria-describedby="basic-addon2">
-            <div class="input-group-append">
-              <button class="btn btn-outline-secondary" type="submit">Login</button>
-            </div>
-          </form>
-          <!-- <form id="addPlayerForm" class="form-inline my-2 my-sm-0">
-            <input class="mx-2" type="text" name="name" placeholder="Name">
-            <button class="mx -2 btn btn-outline-success my-0 my-sm-0" type="submit">Add Player</button>
-          </form> -->
-        </div>
-      </nav>
+        <small class="form-text text-muted"><span id="connectionStatus">not connected</span></small>
+      </div>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#">Singles</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Doubles</a>
+          </li>
+        </ul>
+        <!-- <form id="loginForm" class="form-inline my-2 my-sm-0">
+          <input class="form-control" type="text" name="name" placeholder="Name">
+          <button class="form-control btn btn-outline-success my-2 my-sm-0" type="submit">Add Player</button>
+        </form> -->
+        <form id="addPlayerForm" class="input-group mb-3 my-2 mx-2">
+          <input type="text" name="name" class="form-control" placeholder="Name" aria-label="Recipient's username" aria-describedby="basic-addon2">
+          <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="submit">Add player</button>
+          </div>
+        </form>
+        <form id="loginForm" class="input-group mb-3 my-2 mx-2">
+          <input type="password" name="password" class="form-control" placeholder="password" aria-label="Recipient's username" aria-describedby="basic-addon2">
+          <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="submit">Login</button>
+          </div>
+        </form>
+        <!-- <form id="addPlayerForm" class="form-inline my-2 my-sm-0">
+          <input class="mx-2" type="text" name="name" placeholder="Name">
+          <button class="mx -2 btn btn-outline-success my-0 my-sm-0" type="submit">Add Player</button>
+        </form> -->
+      </div>
+    </nav>
     <table id = "mainTable" class="table table-dark table-striped table-hover table-borderless">
       <thead class = "thead-dark">
         <tr>
@@ -90,11 +93,6 @@
         </div> -->
       </tbody>
     </table>
-    <div class="container">
-        <button class="btn btn-dark"style= "margin-top:100px;"onclick="googleLogin()">log in with google</button>
-        <button class="btn btn-dark"style= "margin-top:100px;"onclick="passwordLogin()">log in with password</button>
-        <p class = "databaseRetrieval">Database content shown here</p>
-    </div>
     
     <script src="app.js">
     </script>
