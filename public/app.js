@@ -9,7 +9,6 @@ document.addEventListener("DOMContentLoaded", event => {
         const data = doc.data();
         var a = document.querySelector(".databaseRetrieval");
         a.textContent = data.title;
-        
     });
     // below gets it once
     // info.get().then(doc => {
@@ -17,13 +16,12 @@ document.addEventListener("DOMContentLoaded", event => {
     //     var a = document.querySelector(".databaseRetrieval");
     //     a.textContent = data.title;
     // });
-
-
 });
 
 const form = document.querySelector("#addPlayerForm")
 
 form.addEventListener('submit', (e) =>{
+    alert("hello");
     e.preventDefault();
     firebase.firestore().collection("Players").doc(form.name.value).set({
         name: form.name.value,
