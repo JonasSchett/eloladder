@@ -3,6 +3,9 @@ document.addEventListener("DOMContentLoaded", event => {
     console.log(app);
     const mainTable = document.querySelector("#mainTableBody");
 
+    var currentWinner = '';
+    var currentLoser = '';
+
     const db = firebase.firestore();
     const authVerification = db.collection('information').doc('authVerification');
     // below is a continous stream
@@ -30,10 +33,26 @@ document.addEventListener("DOMContentLoaded", event => {
             let control = document.createElement('td');
             let winButton = document.createElement('button');
             let looseButton = document.createElement('button');
-            winButton.classList.add('btn', 'btn-success');
+            winButton.classList.add('btn', 'btn-success', 'mx-2');
             winButton.textContent = "Won";
-            looseButton.classList.add('btn', 'btn-danger');
+            winButton.addEventListener('click', function(){
+                currentWinner = entry.data().name;
+                if(checkGame(currentWinner,currentLoser))
+                {
+                    currentWinner = '';
+                    currentLoser = '';
+                }
+            });
+            looseButton.classList.add('btn', 'btn-danger', 'mx-2');
             looseButton.textContent = "Lost";
+            looseButton.addEventListener('click', function(){
+                currentLoser = entry.data().name;
+                if(checkGame(currentWinner, currentLoser))
+                {
+                    currentLoser = '';
+                    currentWinner = '';
+                }
+            });
             control.appendChild(winButton);
             control.appendChild(looseButton);
 
@@ -96,3 +115,53 @@ loginForm.addEventListener('submit', (e) =>{
     });
     loginForm.password.value = '';
 });
+
+function checkGame(winner, loser){
+    if((winner != loser) && (winner != '') && (loser != '') && confirm("did " + winner + " defeat " + loser + "?")){
+        var db = firebase.firestore();
+        var players = db.collection("Players");
+        var winningPlayer = players.doc(winner);
+        var losingPlayer = players.doc(loser);
+        var winningPoints = 0;
+        var losingPoints = 0;
+
+        // get results from the database and wait for them to return promises.
+        const promises = [];
+        //get winning player points
+        promises.push(winningPlayer.get().then(doc => {
+            if(doc.exists){
+                winningPoints = doc.data().points;
+            }
+        }));
+        //get losing player points
+        promises.push(losingPlayer.get().then(doc => {
+            if(doc.exists){
+                losingPoints = doc.data().points;
+            }
+        }));
+
+        // after all promises have been received we can continue with the
+        // actual calculation of the program
+        Promise.all(promises).then((e) => {
+            // calculate new elo
+            //get Elo parameters
+            const n = 400;
+            const k = 80;
+            const x  = winningPoints - losingPoints;
+            const exponent = -(x/n);
+            const winnerExpected = 1/(1+Math.pow(10,exponent));
+            const loserExpected = 1-winnerExpected;
+            winningPoints = Math.round(winningPoints + k * (1-winnerExpected));
+            losingPoints = Math.round(losingPoints + k * (0-loserExpected));
+
+            winningPlayer.update({
+                points: winningPoints
+            })
+            losingPlayer.update({
+                points: losingPoints
+            })
+        });
+        return true;
+    }
+    return false;
+}
