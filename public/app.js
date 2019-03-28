@@ -94,4 +94,5 @@ loginForm.addEventListener('submit', (e) =>{
         var errorMessage = error.message;
         // ...
     });
+    loginForm.password.value = '';
 });
