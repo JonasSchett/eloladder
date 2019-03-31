@@ -120,10 +120,16 @@ function checkGame(winner, loser){
     if((winner != loser) && (winner != '') && (loser != '') && confirm("did " + winner + " defeat " + loser + "?")){
         var db = firebase.firestore();
         var players = db.collection("Players");
+        var gameInfo = db.collection("information").doc("gameInformation");
         var winningPlayer = players.doc(winner);
         var losingPlayer = players.doc(loser);
         var winningPoints = 0;
         var losingPoints = 0;
+        var winningWins = 0;
+        var losingLosses = 0;
+
+        var n = 0;
+        var k = 0;
 
         // get results from the database and wait for them to return promises.
         const promises = [];
@@ -131,22 +137,31 @@ function checkGame(winner, loser){
         promises.push(winningPlayer.get().then(doc => {
             if(doc.exists){
                 winningPoints = doc.data().points;
+                winningWins = doc.data().wins + 1;
             }
         }));
         //get losing player points
         promises.push(losingPlayer.get().then(doc => {
             if(doc.exists){
                 losingPoints = doc.data().points;
+                losingLosses = doc.data().losses + 1;
             }
         }));
+
+        promises.push(gameInfo.get().then(doc =>{
+            if(doc.exists){
+                n = doc.data().n;
+                k = doc.data().k;
+            }
+        }));
+
+
 
         // after all promises have been received we can continue with the
         // actual calculation of the program
         Promise.all(promises).then((e) => {
             // calculate new elo
             //get Elo parameters
-            const n = 400;
-            const k = 80;
             const x  = winningPoints - losingPoints;
             const exponent = -(x/n);
             const winnerExpected = 1/(1+Math.pow(10,exponent));
@@ -155,10 +170,14 @@ function checkGame(winner, loser){
             losingPoints = Math.round(losingPoints + k * (0-loserExpected));
 
             winningPlayer.update({
-                points: winningPoints
+                points: winningPoints,
+                wins: winningWins,
+                lastOpponent: loser
             })
             losingPlayer.update({
-                points: losingPoints
+                points: losingPoints,
+                losses: losingLosses,
+                lastOpponent: winner
             })
         });
         return true;
