@@ -296,7 +296,7 @@ function calculateDecay(){
                 totalNotPlayedFor += decayPlayersArray[i].notPlayedFor;
             }
 
-            console.log("Total decay not played for: " + totalNotPlayedFor);
+            // console.log("Total decay not played for: " + totalNotPlayedFor);
 
             for(var i = 0; i < decayPlayersArray.length; i ++)
             {
@@ -317,14 +317,14 @@ function calculateDecay(){
             var totalGains = totalActualDecay;
             var totalActualGains = 0;
 
-            console.log("Total gains: " + totalGains);
+            // console.log("Total gains: " + totalGains);
 
             for(var i = 0; i < gainingPlayersArray.length; i ++)
             {
                 totalInvertedNotPlayedFor += gainingPlayersArray[i].notPlayedForInverted; 
             }
 
-            console.log("Total inverted not played for: " + totalInvertedNotPlayedFor);
+            // console.log("Total inverted not played for: " + totalInvertedNotPlayedFor);
 
             for(var i = 0; i < gainingPlayersArray.length; i ++)
             {
@@ -344,7 +344,7 @@ function calculateDecay(){
             if(totalActualGains != totalActualDecay){
                 
                 var difference = totalActualDecay - totalActualGains;
-                console.log("There is a difference in gains and decay: " + difference);
+                console.log("There is a difference in gains and decay, adjusting");
                 // give difference to random player
                 var luckyPick = gainingPlayersArray[0];
 
