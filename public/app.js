@@ -15,12 +15,15 @@ document.addEventListener("DOMContentLoaded", event => {
         connectionStatus.textContent = data.info;
         connectionStatus.classList.add("connectionSuccess");
     });
+
+    // waits for changes in the database and updates table if any change happens
     db.collection("Players").orderBy("points", "desc").onSnapshot(doc =>{
         while(mainTable.firstChild){
             mainTable.removeChild(mainTable.firstChild);
         }
         var counter = 1;
         doc.forEach(function(entry){
+            // add table row for each player
             let div = document.createElement('div');
             let row = document.createElement('tr');
             let head = document.createElement('th');
@@ -126,28 +129,47 @@ function checkGame(winner, loser){
         var gameInfo = db.collection("information").doc("gameInformation");
         var winningPlayer = players.doc(winner);
         var losingPlayer = players.doc(loser);
+        //points of winning and losing player
         var winningPoints = 0;
         var losingPoints = 0;
+
+        //wins and losses of winning/losing player respectively
         var winningWins = 0;
         var losingLosses = 0;
+
+        //last opponents of winner/loser
         var winnerLastOpponent = '';
         var loserLastOpponent = '';
+
+        //total number of games played
         var gamesPlayed = 0;
+
+        // default decay calculation factor (how many game until we calculate decay)
         var decayCalculationFactor = 100;
 
+        //streak calculation variables of winner
+        //loser will just default to 0
+        var winnerStreak = 0;
+        var winnerMaxStreak = 0;
+
+        // k and n variable of elo ranking, (check https://blog.mackie.io/the-elo-algorithm)
         var n = 0;
         var k = 0;
 
-        // get results from the database and wait for them to return promises.
+        // get results from the database and wait for them to return promises
         const promises = [];
+
         //get winning player points
         promises.push(winningPlayer.get().then(doc => {
             if(doc.exists){
                 winningPoints = doc.data().points;
                 winningWins = doc.data().wins + 1;
                 winnerLastOpponent = doc.data().lastOpponent;
+                winnerStreak = doc.data().currentStreak;
+                winnerMaxStreak = doc.data().maxStreak;
             }
         }));
+
         //get losing player points
         promises.push(losingPlayer.get().then(doc => {
             if(doc.exists){
@@ -157,6 +179,7 @@ function checkGame(winner, loser){
             }
         }));
 
+        // get general game info from database
         promises.push(gameInfo.get().then(doc =>{
             if(doc.exists){
                 n = doc.data().n;
@@ -165,7 +188,6 @@ function checkGame(winner, loser){
                 decayCalculationFactor = doc.data().decayCalculationFactor;
             }
         }));
-
         // after all promises have been received we can continue with the
         // actual calculation of the program
         Promise.all(promises).then((e) => {
@@ -186,18 +208,23 @@ function checkGame(winner, loser){
             const loserExpected = 1-winnerExpected;
             winningPoints = Math.round(winningPoints + k * (1-winnerExpected));
             losingPoints = Math.round(losingPoints + k * (0-loserExpected));
+            winnerStreak += 1;
+            winnerMaxStreak = winnerStreak > winnerMaxStreak ? winnerStreak : winnerMaxStreak;
 
             winningPlayer.update({
                 points: winningPoints,
                 wins: winningWins,
                 lastOpponent: loser,
-                notPlayedFor: 0
+                notPlayedFor: 0,
+                currentStreak: winnerStreak, 
+                maxStreak : winnerMaxStreak
             });
             losingPlayer.update({
                 points: losingPoints,
                 losses: losingLosses,
                 lastOpponent: winner,
-                notPlayedFor: 0
+                notPlayedFor: 0,
+                currentStreak: 0
             });
             gameInfo.update({
                 gamesPlayed: gamesPlayed,
