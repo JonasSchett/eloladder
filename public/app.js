@@ -129,12 +129,17 @@ loginForm.addEventListener('submit', (e) =>{
         var errorMessage = error.message;
         // ...
     }).then(e =>{
+        //reload page
         location.reload();
     });
 
     loginForm.password.value = '';
 });
 
+// function to check
+// if a game is valid,
+// how many points will be exchanged
+// also exchanges points and updates players
 function checkGame(winner, loser){
     if((winner != loser) && (winner != '') && (loser != '') && confirm("Did " + winner + " defeat " + loser + "?")){
         var db = firebase.firestore();
