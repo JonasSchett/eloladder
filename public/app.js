@@ -128,6 +128,8 @@ loginForm.addEventListener('submit', (e) =>{
         var errorCode = error.code;
         var errorMessage = error.message;
         // ...
+    }).then(e =>{
+        location.reload();
     });
 
     loginForm.password.value = '';
