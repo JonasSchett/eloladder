@@ -88,24 +88,35 @@ const addPlayerForm = document.querySelector("#addPlayerForm");
 
 addPlayerForm.addEventListener('submit', (e) =>{
     e.preventDefault();
-    firebase.firestore().collection("Players").doc(addPlayerForm.name.value).set({
-        name: addPlayerForm.name.value,
-        points: 1500,
-        wins: 0,
-        losses: 0,
-        currentStreak: 0,
-        maxStreak: 0,
-        lastOpponent: '',
-        notPlayedFor: 0
-    })
-    .then(function() {
-        console.log("Document successfully written!");
-    })
-    .catch(function(error) {
-        console.error("Error writing document: ", error);
+    var name = addPlayerForm.name.value;
+    var playerToAdd = firebase.firestore().collection("Players").doc(name);
+    playerToAdd.get().then(doc =>{
+        if(doc.exists)
+        {
+            alert("player already exists");
+        }
+        else
+        {
+            playerToAdd.set({
+                name: name,
+                points: 1500,
+                wins: 0,
+                losses: 0,
+                currentStreak: 0,
+                maxStreak: 0,
+                lastOpponent: '',
+                notPlayedFor: 0
+            })
+            .then(function() {
+                console.log("Document successfully written!");
+            })
+            .catch(function(error) {
+                console.error("Error writing document: ", error);
+            });
+        }
+    }).then((e)=>{
+        addPlayerForm.name.value = '';
     });
-
-    addPlayerForm.name.value = '';
 });
 
 const loginForm = document.querySelector("#loginForm");
