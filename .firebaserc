@@ -1,5 +1,6 @@
 {
   "projects": {
-    "league": "table-football-league"
+    "league": "table-football-league",
+    "default": "table-football-league"
   }
 }

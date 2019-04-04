@@ -1,11 +1,17 @@
+var doubles = false;
+
+var currentWinner = '';
+var currentLoser = '';
+
+const mainTable = document.querySelector("#mainTableBody");
+
+const distinct = (value, index, self) =>
+{
+    return self.indexOf(value) === index;
+};
+
 document.addEventListener("DOMContentLoaded", event => {
-    const app = firebase.app();
-    console.log(app);
-    const mainTable = document.querySelector("#mainTableBody");
-
-    var currentWinner = '';
-    var currentLoser = '';
-
+    
     const db = firebase.firestore();
     const authVerification = db.collection('information').doc('authVerification');
     // below is a continous stream
@@ -18,69 +24,7 @@ document.addEventListener("DOMContentLoaded", event => {
 
     // waits for changes in the database and updates table if any change happens
     db.collection("Players").orderBy("points", "desc").onSnapshot(doc =>{
-        while(mainTable.firstChild){
-            mainTable.removeChild(mainTable.firstChild);
-        }
-        var counter = 1;
-        doc.forEach(function(entry){
-            // add table row for each player
-            let div = document.createElement('div');
-            let row = document.createElement('tr');
-            let head = document.createElement('th');
-            let name = document.createElement('td');
-            let points = document.createElement('td');
-            let wins = document.createElement('td');
-            let losses = document.createElement('td');
-            let streak = document.createElement('td');
-
-            let control = document.createElement('td');
-            let winButton = document.createElement('button');
-            let looseButton = document.createElement('button');
-            winButton.classList.add('btn', 'btn-success', 'mx-2');
-            winButton.textContent = "Won";
-            winButton.addEventListener('click', function(){
-                currentWinner = entry.data().name;
-                if(checkGame(currentWinner,currentLoser))
-                {
-                    currentWinner = '';
-                    currentLoser = '';
-                }
-            });
-            looseButton.classList.add('btn', 'btn-danger', 'mx-2');
-            looseButton.textContent = "Lost";
-            looseButton.addEventListener('click', function(){
-                currentLoser = entry.data().name;
-                if(checkGame(currentWinner, currentLoser))
-                {
-                    currentLoser = '';
-                    currentWinner = '';
-                }
-            });
-            control.appendChild(winButton);
-            control.appendChild(looseButton);
-
-            div.classList.add("playerRow");
-            head.textContent = counter++;
-            name.textContent = entry.data().name;
-            points.textContent = entry.data().points;
-            wins.textContent = entry.data().wins;
-            losses.textContent = entry.data().losses;
-            streak.textContent = entry.data().currentStreak;
-
-            wins.classList.add('d-none', 'd-sm-table-cell');
-            losses.classList.add('d-none', 'd-sm-table-cell');
-            streak.classList.add('d-none', 'd-md-table-cell');
-
-            row.appendChild(head);
-            row.appendChild(name);
-            row.appendChild(points);
-            row.appendChild(wins);
-            row.appendChild(losses);
-            row.appendChild(streak);
-            row.appendChild(control);
-
-            mainTable.appendChild(row);
-        });
+        loadTableWithDocument(doc, mainTable);
     });
 });
 
@@ -145,15 +89,16 @@ function checkGame(winner, loser){
         var db = firebase.firestore();
         var players = db.collection("Players");
         var gameInfo = db.collection("information").doc("gameInformation");
-        var winningPlayer = players.doc(winner);
-        var losingPlayer = players.doc(loser);
+        var gameRequests = db.collection("GameRequests").doc("Games");
+        var winningPlayer1 = players.doc(winner);
+        var losingPlayer1 = players.doc(loser);
         //points of winning and losing player
-        var winningPoints = 0;
-        var losingPoints = 0;
+        var winningPoints1 = 0;
+        var losingPoints1 = 0;
 
         //wins and losses of winning/losing player respectively
-        var winningWins = 0;
-        var losingLosses = 0;
+        var winningWins1 = 0;
+        var losingLosses1 = 0;
 
         //last opponents of winner/loser
         var winnerLastOpponent = '';
@@ -178,10 +123,10 @@ function checkGame(winner, loser){
         const promises = [];
 
         //get winning player points
-        promises.push(winningPlayer.get().then(doc => {
+        promises.push(winningPlayer1.get().then(doc => {
             if(doc.exists){
-                winningPoints = doc.data().points;
-                winningWins = doc.data().wins + 1;
+                winningPoints1 = doc.data().points;
+                winningWins1 = doc.data().wins + 1;
                 winnerLastOpponent = doc.data().lastOpponent;
                 winnerStreak = doc.data().currentStreak;
                 winnerMaxStreak = doc.data().maxStreak;
@@ -189,10 +134,10 @@ function checkGame(winner, loser){
         }));
 
         //get losing player points
-        promises.push(losingPlayer.get().then(doc => {
+        promises.push(losingPlayer1.get().then(doc => {
             if(doc.exists){
-                losingPoints = doc.data().points;
-                losingLosses = doc.data().losses + 1;
+                losingPoints1 = doc.data().points;
+                losingLosses1 = doc.data().losses + 1;
                 loserLastOpponent = doc.data().lastOpponent;
             }
         }));
@@ -220,26 +165,26 @@ function checkGame(winner, loser){
             // calculate new elo
             //get Elo parameters
             gamesPlayed = gamesPlayed + 1;
-            const x  = winningPoints - losingPoints;
+            const x  = winningPoints1 - losingPoints1;
             const exponent = -(x/n);
             const winnerExpected = 1/(1+Math.pow(10,exponent));
             const loserExpected = 1-winnerExpected;
-            winningPoints = Math.round(winningPoints + k * (1-winnerExpected));
-            losingPoints = Math.round(losingPoints + k * (0-loserExpected));
+            winningPoints1 = Math.round(winningPoints1 + k * (1-winnerExpected));
+            losingPoints1 = Math.round(losingPoints1 + k * (0-loserExpected));
             winnerStreak += 1;
             winnerMaxStreak = winnerStreak > winnerMaxStreak ? winnerStreak : winnerMaxStreak;
 
-            winningPlayer.update({
-                points: winningPoints,
-                wins: winningWins,
+            winningPlayer1.update({
+                points: winningPoints1,
+                wins: winningWins1,
                 lastOpponent: loser,
                 notPlayedFor: 0,
                 currentStreak: winnerStreak, 
                 maxStreak : winnerMaxStreak
             });
-            losingPlayer.update({
-                points: losingPoints,
-                losses: losingLosses,
+            losingPlayer1.update({
+                points: losingPoints1,
+                losses: losingLosses1,
                 lastOpponent: winner,
                 notPlayedFor: 0,
                 currentStreak: 0
@@ -247,11 +192,23 @@ function checkGame(winner, loser){
             gameInfo.update({
                 gamesPlayed: gamesPlayed,
                 games:firebase.firestore.FieldValue.arrayUnion(
-                    {winner:winner,
-                     loser:loser, 
-                     winnerProbability:winnerExpected,
-                     loserProbability:loserExpected,
-                     gameNumber:gamesPlayed})
+                    {
+                        winner:winner,
+                        loser:loser, 
+                        winnerProbability:winnerExpected,
+                        loserProbability:loserExpected,
+                        gameNumber:gamesPlayed
+                    })
+            });
+            gameRequests.update({
+                requests:firebase.firestore.FieldValue.arrayUnion(
+                    {
+                        winner:winner,
+                        loser:loser, 
+                        winnerProbability:winnerExpected,
+                        loserProbability:loserExpected,
+                        gameNumber:gamesPlayed  
+                    })
             });
 
             //update not played for value of players
@@ -274,6 +231,69 @@ function checkGame(winner, loser){
         return true;
     }
     return false;
+}
+
+function checkGameDoubles(winner1, winner2, loser1, loser2)
+{
+
+    // get db information
+    var db = firebase.firestore();
+    var players = db.collection("Players");
+    var gameInfo = db.collection("information").doc("gameInformation");
+
+    // get a list of players in which each player can be in the list only once
+    var playerList = [winner1, winner2, loser1, loser2].filter(distinct);
+
+    
+
+    // return if the player list does not contain 4 distinct players
+    if(playerList.length < 4)
+    {
+        return;
+    }
+
+    var playerInfoList = [
+        {name:winner1, won: true},
+        {name:winner2, won: true},
+        {name:loser1, won: false},
+        {name:loser2, won: false},
+    ]
+
+    var promises = [];
+
+    for(var i = 0; i < playerInfoList.length; i++)
+    {
+        var currentPlayer = players.doc(playerInfoList[i].name);
+        console.log(currentPlayer);
+        promises.push(currentPlayer.get().then(doc => {
+            if(doc.exists){
+                console.log(doc.data().points);
+                currentPlayer.points = doc.data().points;
+                currentPlayer.wins = doc.data().wins + 1;
+                currentPlayer.lastOpponent = doc.data().lastOpponent;
+                currentPlayer.currentStreak = doc.data().currentStreak;
+                currentPlayer.maxStreak = doc.data().maxStreak;
+            }
+            else{
+                alert("asd");
+            }
+        }));
+    }
+    
+    
+    // get general game info from database
+    promises.push(gameInfo.get().then(doc =>{
+        if(doc.exists){
+            n = doc.data().n;
+            k = doc.data().k;
+            gamesPlayed = doc.data().gamesPlayed;
+            decayCalculationFactor = doc.data().decayCalculationFactor;
+        }
+    }));
+
+    Promise.all(promises).then((e) => {
+        console.log(playerInfoList); 
+    });
 }
 
 
@@ -398,5 +418,103 @@ function calculateDecay(){
                 });
             }
         });
+    });
+}
+
+const singlesButton = document.querySelector("#singles");
+const doublesButton = document.querySelector("#doubles");
+
+
+singlesButton.addEventListener("click", (e) =>{
+    e.preventDefault();
+    changeDoubles(false);
+});
+doublesButton.addEventListener("click", (e) =>{
+    e.preventDefault();
+    changeDoubles(true);
+});
+
+function changeDoubles(activateDoubles)
+{
+    doubles = activateDoubles;
+    firebase.firestore().collection("Players").orderBy("points", "desc").get().then(doc =>{
+        loadTableWithDocument(doc, mainTable);
+    });
+}
+
+function loadTableWithDocument(doc, mainTable)
+{
+    while(mainTable.firstChild)
+    {
+        mainTable.removeChild(mainTable.firstChild);
+    }
+    var counter = 1;
+    doc.forEach(function(entry)
+    {
+        // add table row for each player
+        let div = document.createElement('div');
+        let row = document.createElement('tr');
+        let head = document.createElement('th');
+        let name = document.createElement('td');
+        let points = document.createElement('td');
+        let wins = document.createElement('td');
+        let losses = document.createElement('td');
+        let streak = document.createElement('td');
+
+        let control = document.createElement('td');
+        let winButton = document.createElement('button');
+        let looseButton = document.createElement('button');
+        winButton.classList.add('btn', 'btn-success', 'mx-2');
+        if(doubles)
+        {
+            winButton.textContent = "Won"
+        }
+        else
+        {
+            winButton.textContent = "Won"
+        }
+        
+        winButton.addEventListener('click', function(){
+            currentWinner = entry.data().name;
+            if(checkGame(currentWinner,currentLoser))
+            {
+                currentWinner = '';
+                currentLoser = '';
+            }
+        });
+        looseButton.classList.add('btn', 'btn-danger', 'mx-2');
+        looseButton.textContent = "Lost";
+        looseButton.addEventListener('click', function(){
+            currentLoser = entry.data().name;
+            if(checkGame(currentWinner, currentLoser))
+            {
+                currentLoser = '';
+                currentWinner = '';
+            }
+        });
+        control.appendChild(winButton);
+        control.appendChild(looseButton);
+
+        div.classList.add("playerRow");
+        head.textContent = counter++;
+        name.textContent = entry.data().name;
+        points.textContent = entry.data().points;
+        wins.textContent = entry.data().wins;
+        losses.textContent = entry.data().losses;
+        streak.textContent = entry.data().currentStreak;
+
+        wins.classList.add('d-none', 'd-sm-table-cell');
+        losses.classList.add('d-none', 'd-sm-table-cell');
+        streak.classList.add('d-none', 'd-md-table-cell');
+
+        row.appendChild(head);
+        row.appendChild(name);
+        row.appendChild(points);
+        row.appendChild(wins);
+        row.appendChild(losses);
+        row.appendChild(streak);
+        row.appendChild(control);
+
+        mainTable.appendChild(row);
     });
 }
