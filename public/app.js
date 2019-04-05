@@ -200,15 +200,9 @@ function checkGame(winner, loser){
                         gameNumber:gamesPlayed
                     })
             });
-            gameRequests.update({
-                requests:firebase.firestore.FieldValue.arrayUnion(
-                    {
-                        winner:winner,
-                        loser:loser, 
-                        winnerProbability:winnerExpected,
-                        loserProbability:loserExpected,
-                        gameNumber:gamesPlayed  
-                    })
+            db.collection("GameRequests").add({
+                winner: winner,
+                loser: loser
             });
 
             //update not played for value of players

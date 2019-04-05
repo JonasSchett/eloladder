@@ -1,26 +1,31 @@
 import * as functions from 'firebase-functions';
 
+const Firestore = require('@google-cloud/firestore');
+
+const firestore = new Firestore({
+  projectId: process.env.GCP_PROJECT,
+});
+
 // Start writing Firebase Functions
 // https://firebase.google.com/docs/functions/typescript
 
-export const scriptUpdated = functions.firestore.document('GameRequests/Games').onUpdate((change,context) =>{
-    const data = change.after.data();
-
-    if(data == undefined || data.read == "I was read")
+export const scriptUpdated = functions.firestore.document('GameRequests/{userId}').onCreate((snap,context) =>{
+    const data = snap.data();
+    if(data == undefined)
     {
         return null;
     }
 
-    //loop through requests
-    // var names = [];
-    // for(var i = 0; i < data.requests.length; i ++)
-    // {
-    //     names.push()
-    // }
+    const winner = data.winner;
+    const loser = data.loser;
+    
 
-    // Then return a promise of a set operation to update the count
-    return change.after.ref.set({
-    read: "I was read",
-    requests:[]
+    const winnerDocument = firestore.document("Players/"+winner);
+    const loserDocument = firestore.document("Players/"+loser);
+
+    return snap.ref.set({
+    winner: winner,
+    loser:loser,
+    read:"This game was calculated"
     }, {merge: true});
 });
