@@ -1,17 +1,13 @@
 import * as functions from 'firebase-functions';
-
-const Firestore = require('@google-cloud/firestore');
-
-const firestore = new Firestore({
-  projectId: process.env.GCP_PROJECT,
-});
+import * as admin from 'firebase-admin';
+admin.initializeApp();
 
 // Start writing Firebase Functions
 // https://firebase.google.com/docs/functions/typescript
 
 export const scriptUpdated = functions.firestore.document('GameRequests/{userId}').onCreate((snap,context) =>{
     const data = snap.data();
-    if(data == undefined)
+    if(data === undefined)
     {
         return null;
     }
@@ -19,10 +15,24 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
     const winner = data.winner;
     const loser = data.loser;
     
-
-    const winnerDocument = firestore.document("Players/"+winner);
-    const loserDocument = firestore.document("Players/"+loser);
-
+    const players = admin.firestore().collection('Players');
+    //var winningPoints = 0;
+    const winningPlayer = players.doc(winner);
+    // players.doc(winner).get().then(doc =>{
+    //   if(doc.exists){
+    //   }
+    // });
+    winningPlayer.get()
+    .catch(err => console.log(err))
+    .then(function(docRef){
+      if(docRef !== undefined)
+      {
+        console.log(docRef.data());
+      }
+    })
+    .catch(() => "obligatory catch");
+    console.log(winningPlayer);
+    
     return snap.ref.set({
     winner: winner,
     loser:loser,
