@@ -41,21 +41,8 @@ addPlayerForm.addEventListener('submit', (e) =>{
         }
         else
         {
-            playerToAdd.set({
-                name: name,
-                points: 1500,
-                wins: 0,
-                losses: 0,
-                currentStreak: 0,
-                maxStreak: 0,
-                lastOpponent: '',
-                notPlayedFor: 0
-            })
-            .then(function() {
-                console.log("Document successfully written!");
-            })
-            .catch(function(error) {
-                console.error("Error writing document: ", error);
+            firebase.firestore().collection("PlayerAddRequests").add({
+                name:name
             });
         }
     }).then((e)=>{
@@ -133,16 +120,16 @@ function checkGame(winner, loser){
         // actual calculation of the program
         Promise.all(promises).then((e) => {
             //check if the game is actually valid from the data gathered:
+            // if it is invalid we return here, should a player manage to get past this,
+            // google functions will check for this again
             if(loserLastOpponent == winner || winnerLastOpponent == loser)
             {
                 alert('Each player has to play at least someone else, before playing again');
                 return;
             }
-            //actually play a game
 
-            // calculate new elo
-            //get Elo parameters
-            
+            // Send gamerequest to database
+            // calculation of scores will happen in google functions
             db.collection("GameRequests").add({
                 winner: winner,
                 loser: loser
