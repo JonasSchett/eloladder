@@ -89,35 +89,13 @@ function checkGame(winner, loser){
         var db = firebase.firestore();
         var players = db.collection("Players");
         var gameInfo = db.collection("information").doc("gameInformation");
-        var gameRequests = db.collection("GameRequests").doc("Games");
         var winningPlayer1 = players.doc(winner);
         var losingPlayer1 = players.doc(loser);
         //points of winning and losing player
-        var winningPoints1 = 0;
-        var losingPoints1 = 0;
-
-        //wins and losses of winning/losing player respectively
-        var winningWins1 = 0;
-        var losingLosses1 = 0;
 
         //last opponents of winner/loser
         var winnerLastOpponent = '';
         var loserLastOpponent = '';
-
-        //total number of games played
-        var gamesPlayed = 0;
-
-        // default decay calculation factor (how many game until we calculate decay)
-        var decayCalculationFactor = 100;
-
-        //streak calculation variables of winner
-        //loser will just default to 0
-        var winnerStreak = 0;
-        var winnerMaxStreak = 0;
-
-        // k and n variable of elo ranking, (check https://blog.mackie.io/the-elo-algorithm)
-        var n = 0;
-        var k = 0;
 
         // get results from the database and wait for them to return promises
         const promises = [];
@@ -164,63 +142,11 @@ function checkGame(winner, loser){
 
             // calculate new elo
             //get Elo parameters
-            gamesPlayed = gamesPlayed + 1;
-            const x  = winningPoints1 - losingPoints1;
-            const exponent = -(x/n);
-            const winnerExpected = 1/(1+Math.pow(10,exponent));
-            const loserExpected = 1-winnerExpected;
-            winningPoints1 = Math.round(winningPoints1 + k * (1-winnerExpected));
-            losingPoints1 = Math.round(losingPoints1 + k * (0-loserExpected));
-            winnerStreak += 1;
-            winnerMaxStreak = winnerStreak > winnerMaxStreak ? winnerStreak : winnerMaxStreak;
-
-            winningPlayer1.update({
-                points: winningPoints1,
-                wins: winningWins1,
-                lastOpponent: loser,
-                notPlayedFor: 0,
-                currentStreak: winnerStreak, 
-                maxStreak : winnerMaxStreak
-            });
-            losingPlayer1.update({
-                points: losingPoints1,
-                losses: losingLosses1,
-                lastOpponent: winner,
-                notPlayedFor: 0,
-                currentStreak: 0
-            });
-            gameInfo.update({
-                gamesPlayed: gamesPlayed,
-                games:firebase.firestore.FieldValue.arrayUnion(
-                    {
-                        winner:winner,
-                        loser:loser, 
-                        winnerProbability:winnerExpected,
-                        loserProbability:loserExpected,
-                        gameNumber:gamesPlayed
-                    })
-            });
+            
             db.collection("GameRequests").add({
                 winner: winner,
                 loser: loser
             });
-
-            //update not played for value of players
-            // we need to loop through every player,
-            // count up and update our games
-            players.get().then(allPlayers =>{
-                allPlayers.forEach(player =>{
-                    players.doc(player.data().name).update({
-                        notPlayedFor: player.data().notPlayedFor + 1
-                    });
-                });
-            }).then((e) => {
-                if(gamesPlayed % decayCalculationFactor == 0){
-                    calculateDecay();
-                }
-            });
-
-            
         });
         return true;
     }
