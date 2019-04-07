@@ -261,7 +261,7 @@ function changeDoubles(activateDoubles)
         loadTableWithDocument(doc, mainTable);
     });
     const controlArea = document.querySelector('#controlArea');
-    controlArea.textContent = doubles ? "Control (doubles)" : "Control (singles)";
+    controlArea.textContent = doubles ? "Add Game (doubles)" : "Add Game (singles)";
 }
 
 function loadTableWithDocument(doc, mainTable)
