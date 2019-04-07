@@ -2,6 +2,8 @@ var doubles = false;
 
 var currentWinner = '';
 var currentLoser = '';
+var currentWinners = [];
+var currentLosers = [];
 
 const mainTable = document.querySelector("#mainTableBody");
 
@@ -58,7 +60,7 @@ loginForm.addEventListener('submit', (e) =>{
         // Handle Errors here.
         var errorCode = error.code;
         var errorMessage = error.message;
-        // ...
+        console.log("Code: " + errorCode + " Message: " + errorMessage);
     }).then(e =>{
         //reload page
         location.reload();
@@ -72,7 +74,8 @@ loginForm.addEventListener('submit', (e) =>{
 // how many points will be exchanged
 // also exchanges points and updates players
 function checkGame(winner, loser){
-    if((winner != loser) && (winner != '') && (loser != '') && confirm("Did " + winner + " defeat " + loser + "?")){
+    if((winner != undefined) && (loser != undefined) && (winner != loser) && confirm("Did " + winner + " defeat " + loser + "?"))
+    {
         var db = firebase.firestore();
         var players = db.collection("Players");
         var gameInfo = db.collection("information").doc("gameInformation");
@@ -347,6 +350,8 @@ function changeDoubles(activateDoubles)
     firebase.firestore().collection("Players").orderBy("points", "desc").get().then(doc =>{
         loadTableWithDocument(doc, mainTable);
     });
+    const controlArea = document.querySelector('#controlArea');
+    controlArea.textContent = doubles ? "Control (doubles)" : "Control (singles)";
 }
 
 function loadTableWithDocument(doc, mainTable)
@@ -367,11 +372,26 @@ function loadTableWithDocument(doc, mainTable)
         let wins = document.createElement('td');
         let losses = document.createElement('td');
         let streak = document.createElement('td');
+        let lastOpponent = document.createElement('td');
 
         let control = document.createElement('td');
         let winButton = document.createElement('button');
         let looseButton = document.createElement('button');
-        winButton.classList.add('btn', 'btn-success', 'mx-2');
+
+        row.classList.add('d-flex')
+        //create width definition here:
+        head.classList.add('col');
+        name.classList.add('col-4', 'col-sm-3');
+        points.classList.add('col');
+        wins.classList.add('col');
+        losses.classList.add('col');
+        streak.classList.add('col');
+        lastOpponent.classList.add('col-2');
+        control.classList.add('col-6', 'col-sm-5', 'col-md-4', 'col-xl-2');
+
+
+
+        winButton.classList.add('btn', 'btn-success', 'mx-1', 'col-auto');
         if(doubles)
         {
             winButton.textContent = "Won"
@@ -382,22 +402,12 @@ function loadTableWithDocument(doc, mainTable)
         }
         
         winButton.addEventListener('click', function(){
-            currentWinner = entry.data().name;
-            if(checkGame(currentWinner,currentLoser))
-            {
-                currentWinner = '';
-                currentLoser = '';
-            }
+            addGameParticipant(entry.data().name, true);
         });
-        looseButton.classList.add('btn', 'btn-danger', 'mx-2');
+        looseButton.classList.add('btn', 'btn-danger', 'mx-1', 'col-auto');
         looseButton.textContent = "Lost";
         looseButton.addEventListener('click', function(){
-            currentLoser = entry.data().name;
-            if(checkGame(currentWinner, currentLoser))
-            {
-                currentLoser = '';
-                currentWinner = '';
-            }
+            addGameParticipant(entry.data().name, false);
         });
         control.appendChild(winButton);
         control.appendChild(looseButton);
@@ -409,10 +419,12 @@ function loadTableWithDocument(doc, mainTable)
         wins.textContent = entry.data().wins;
         losses.textContent = entry.data().losses;
         streak.textContent = entry.data().currentStreak;
+        lastOpponent.textContent = entry.data().lastOpponent;
 
         wins.classList.add('d-none', 'd-sm-table-cell');
         losses.classList.add('d-none', 'd-sm-table-cell');
         streak.classList.add('d-none', 'd-md-table-cell');
+        lastOpponent.classList.add('d-none', 'd-xl-table-cell');
 
         row.appendChild(head);
         row.appendChild(name);
@@ -420,8 +432,37 @@ function loadTableWithDocument(doc, mainTable)
         row.appendChild(wins);
         row.appendChild(losses);
         row.appendChild(streak);
+        row.appendChild(lastOpponent);
         row.appendChild(control);
 
         mainTable.appendChild(row);
     });
+}
+
+function addGameParticipant(player, won)
+{
+    if(won)
+    {
+        currentWinners.push(player);
+        currentWinner = player;
+    }
+    else
+    {
+        currentLosers.push(player);
+        currentLoser = player;
+    }
+
+    if(doubles)
+    {
+
+        //check for doubles match
+    }
+    else
+    {
+        if(checkGame(currentWinners[currentWinners.length -1], currentLosers[currentLosers.length-1]))
+        {
+            currentWinners.splice(0, currentWinners.length);
+            currentLosers.splice(0, currentLosers.length);
+        }
+    }
 }

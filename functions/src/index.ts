@@ -208,9 +208,8 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
       .catch(err => console.log(err));
     })
     .catch(err => console.log(err));
-    
   })
-  .catch(err => console.log(err))
+  .catch(err => console.log(err));
   
   return snap.ref.set({
   winner: winner,
@@ -231,6 +230,9 @@ function calculateDecay(players : FirebaseFirestore.CollectionReference, decayCu
 
   const decayPlayers = players.where("notPlayedFor", ">", decayCutoffGames);
   const gainingPlayers = players.where("notPlayedFor", "<=", decayCutoffGames);
+
+  const individualDecay:number[] = [];
+  const individualGains:number[] = [];
 
   const promises = [];
   promises.push(decayPlayers.get()
@@ -292,6 +294,7 @@ function calculateDecay(players : FirebaseFirestore.CollectionReference, decayCu
       const decayLosses = Math.round(percentage * totalDecay);
       totalActualDecay += decayLosses;
       decayPlayer.currentPoints -= decayLosses;
+      individualDecay.push(decayLosses);
       //update database
       const currentPlayer = players.doc(decayPlayer.name);
       currentPlayer.update({
@@ -320,6 +323,7 @@ function calculateDecay(players : FirebaseFirestore.CollectionReference, decayCu
       const decayGains = Math.round(percentage * totalGains);
       totalActualGains += decayGains;
       gainingPlayer.currentPoints += decayGains;
+      individualGains.push(decayGains);
       // console.log(gainingPlayersArray[i].name + ": " + percentage);
       //update database
       const currentPlayer = players.doc(gainingPlayer.name);
@@ -329,10 +333,14 @@ function calculateDecay(players : FirebaseFirestore.CollectionReference, decayCu
       .catch(err => console.log(err));
     }
 
+    console.log("Total Gains: "  + totalActualGains  + " Total decay: " + totalActualDecay);
+    console.log(individualGains);
+    console.log(individualDecay);
+
     // check if there are no runding errors, and if there are, adjust for them
     if(totalActualGains !== totalActualDecay){ 
       const difference = totalActualDecay - totalActualGains;
-      console.log("There is a difference in gains and decay, adjusting");
+      console.log("There is a difference in gains and decay, adjusting: " + difference);
       // give difference to random player
       const luckyPick = gainingPlayersArray[0];
 

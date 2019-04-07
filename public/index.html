@@ -62,14 +62,15 @@
     </nav>
     <table id = "mainTable" class="table table-dark table-striped table-hover table-borderless">
       <thead class = "thead-dark">
-        <tr>
-          <th scope="col">#</th>
-          <th scope="col">Name</th>
-          <th scope="col">Points</th>
-          <th scope="col" class = "d-none d-sm-table-cell">Wins</th>
-          <th scope="col" class = "d-none d-sm-table-cell">Losses</th>
-          <th scope="col" class = "d-none d-md-table-cell">Streak</th>
-          <th scope="col">Control</th>
+        <tr class = "d-flex">
+          <th scope="col" class = "col">#</th>
+          <th scope="col" class = "col-4 col-sm-3">Name</th>
+          <th scope="col" class = "col">Points</th>
+          <th scope="col" class = "col d-none d-sm-table-cell">Wins</th>
+          <th scope="col" class = "col d-none d-sm-table-cell">Losses</th>
+          <th scope="col" class = "col d-none d-md-table-cell">Streak</th>
+          <th scope="col" class = "col-2 d-none d-xl-table-cell">Last opponent</th>
+          <th scope="col" class = "col-6 col-sm-5 col-md-4 col-xl-2" id="controlArea">Control (singles)</th>
         </tr>
       </thead>
       <tbody id="mainTableBody">
