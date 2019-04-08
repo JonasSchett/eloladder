@@ -261,7 +261,7 @@ function changeDoubles(activateDoubles)
         loadTableWithDocument(doc, mainTable);
     });
     const controlArea = document.querySelector('#controlArea');
-    controlArea.textContent = doubles ? "Add Game (doubles)" : "Add Game (singles)";
+    controlArea.textContent = doubles ? "Double" : "Single";
 }
 
 function loadTableWithDocument(doc, mainTable)
@@ -289,15 +289,15 @@ function loadTableWithDocument(doc, mainTable)
         let looseButton = document.createElement('button');
 
         row.classList.add('d-flex')
-        //create width definition here:
-        head.classList.add('col');
-        name.classList.add('col-4', 'col-sm-3');
-        points.classList.add('col');
-        wins.classList.add('col');
-        losses.classList.add('col');
-        streak.classList.add('col');
-        lastOpponent.classList.add('col-2');
-        control.classList.add('col-6', 'col-sm-5', 'col-md-4', 'col-xl-2');
+        // //create width definition here:
+        head.classList.add('col-1');
+        name.classList.add('col-2');
+        points.classList.add('col-2');
+        wins.classList.add('col-sm-1');
+        losses.classList.add('col-sm-1');
+        streak.classList.add('col-md-1');
+        lastOpponent.classList.add('col-xl-1');
+        control.classList.add('col-5', 'col-md-3', 'col-xl-2');
 
 
 
