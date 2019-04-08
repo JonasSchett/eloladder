@@ -297,7 +297,7 @@ function loadTableWithDocument(doc, mainTable)
         losses.classList.add('col-sm-1');
         streak.classList.add('col-md-1');
         lastOpponent.classList.add('col-xl-1');
-        control.classList.add('col-5', 'col-md-3', 'col-xl-2');
+        control.classList.add('col-6', 'col-md-3', 'col-xl-2');
 
 
 
