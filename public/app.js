@@ -28,27 +28,27 @@ document.addEventListener("DOMContentLoaded", event => {
     });
 });
 
-const addPlayerForm = document.querySelector("#addPlayerForm");
+// const addPlayerForm = document.querySelector("#addPlayerForm");
 
-addPlayerForm.addEventListener('submit', (e) =>{
-    e.preventDefault();
-    var name = addPlayerForm.name.value;
-    var playerToAdd = firebase.firestore().collection("Players").doc(name);
-    playerToAdd.get().then(doc =>{
-        if(doc.exists)
-        {
-            alert("player already exists");
-        }
-        else
-        {
-            firebase.firestore().collection("PlayerAddRequests").add({
-                name:name
-            });
-        }
-    }).then((e)=>{
-        addPlayerForm.name.value = '';
-    });
-});
+// addPlayerForm.addEventListener('submit', (e) =>{
+//     e.preventDefault();
+//     var name = addPlayerForm.name.value;
+//     var playerToAdd = firebase.firestore().collection("Players").doc(name);
+//     playerToAdd.get().then(doc =>{
+//         if(doc.exists)
+//         {
+//             alert("player already exists");
+//         }
+//         else
+//         {
+//             firebase.firestore().collection("PlayerAddRequests").add({
+//                 name:name
+//             });
+//         }
+//     }).then((e)=>{
+//         addPlayerForm.name.value = '';
+//     });
+// });
 
 const loginForm = document.querySelector("#loginForm");
 
