@@ -172,17 +172,28 @@ export const calculateDoubleMatch = functions.firestore.document('GameRequestsDo
     })
     .catch(err => console.log(err)));
 
+    innerPromises.push(snap.ref.update({
+      winner1:winner1,
+      winner2:winner2,
+      loser1:loser1,
+      loser2:loser2,
+      winnerTeamExpectations:winnerExpected,
+      loserTeamExpectations:loserExpected,
+      winner1Gains:winner1Addition,
+      winner2Gains:winner2Addition,
+      loser1Losses:loser1Addition,
+      loser2Losses:loser2Addition,
+      info:"Game was calculated, all data added"
+    })
+    .catch(err => console.log(err)));
+
     //calculate decay
     decayPreparation(innerPromises,players,gamesPlayed,decayCalculationFactor,decayCutoffGames,decayPoints);
   })
   .catch(err => console.log(err));
-  return snap.ref.set({
-    winner1:winner1,
-    winner2:winner2,
-    loser1:loser1,
-    loser2:loser2,
+  return snap.ref.update({
     info:"Game was calculated"
-  }, {merge: true});
+    });
 });
 
 export const playerAdded = functions.firestore.document('PlayerAddRequests/{userId}').onCreate((snap,context) =>{
@@ -360,28 +371,29 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
     .catch(err => console.log(err)));
     innerPromises.push(gameInfo.update({
         gamesPlayed: gamesPlayed,
-        // games:firebase.firestore.FieldValue.arrayUnion(
-        //     {
-        //         winner:winner,
-        //         loser:loser, 
-        //         winnerProbability:winnerExpected,
-        //         loserProbability:loserExpected,
-        //         gameNumber:gamesPlayed
-        //     })
     })
     .catch(err => console.log(err)));
+
+    innerPromises.push(snap.ref.update({
+      winner: winner,
+      loser:loser,
+      winnerExpectations:winnerExpected,
+      loserExpectaions:loserExpected,
+      winnerGain:winnerAddition,
+      loserLoss:loserDeduction,
+      info:"Game was calculated, all data added"
+      })
+      .catch(err => console.log(err)));
+
     //update not played for value of players
     // we need to loop through every player,
     // count up and update our games
     decayPreparation(innerPromises,players,gamesPlayed,decayCalculationFactor,decayCutoffGames,decayPoints);
   })
   .catch(err => console.log(err));
-  
-  return snap.ref.set({
-  winner: winner,
-  loser:loser,
-  info:"Game was calculated"
-  }, {merge: true});
+  return snap.ref.update({
+    info:"Game was calculated"
+    });
 });
 
 function calculateDecay(players : FirebaseFirestore.CollectionReference, decayCutoffGames:number, decayPoints:number){
