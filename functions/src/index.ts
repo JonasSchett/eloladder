@@ -160,6 +160,7 @@ export const calculateDoubleMatch = functions.firestore.document('GameRequestsDo
       innerPromises.push(currentPlayer.update({
         points: player.points,
         wins: player.wins,
+        losses: player.losses,
         notPlayedFor: 0,
         currentStreak: player.streak, 
         maxStreak : player.maxStreak
