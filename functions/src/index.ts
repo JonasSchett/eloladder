@@ -193,7 +193,8 @@ export const calculateDoubleMatch = functions.firestore.document('GameRequestsDo
   })
   .catch(err => console.log(err));
   return snap.ref.update({
-    info:"Game was calculated"
+    info:"Game was calculated",
+    timeStamp: new Date().getTime()
     });
 });
 
@@ -393,7 +394,8 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
   })
   .catch(err => console.log(err));
   return snap.ref.update({
-    info:"Game was calculated"
+    info:"Game was calculated",
+    timeStamp: new Date().getTime()
     });
 });
 
