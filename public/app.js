@@ -4,6 +4,7 @@ var currentWinners = [];
 var currentLosers = [];
 
 const mainTable = document.querySelector("#mainTableBody");
+const singlesTable = document.querySelector("#singlesTableBody");
 
 const distinct = (value, index, self) =>
 {
@@ -26,6 +27,10 @@ document.addEventListener("DOMContentLoaded", event => {
     db.collection("Players").orderBy("points", "desc").onSnapshot(doc =>{
         loadTableWithDocument(doc, mainTable);
     });
+
+    // db.collection("GameRequests").orderBy("timeStamp", "desc").onSnapshot(doc =>{
+    //     updatePreviousGameTable(doc,true);
+    // });
 });
 
 // const addPlayerForm = document.querySelector("#addPlayerForm");
@@ -274,7 +279,6 @@ function loadTableWithDocument(doc, mainTable)
     doc.forEach(function(entry)
     {
         // add table row for each player
-        let div = document.createElement('div');
         let row = document.createElement('tr');
         let head = document.createElement('th');
         let name = document.createElement('td');
@@ -292,7 +296,7 @@ function loadTableWithDocument(doc, mainTable)
         // //create width definition here:
         head.classList.add('col-1');
         name.classList.add('col-2');
-        points.classList.add('col-2');
+        points.classList.add('col-2', 'col-sm-1');
         wins.classList.add('col-sm-1');
         losses.classList.add('col-sm-1');
         streak.classList.add('col-md-1');
@@ -322,7 +326,6 @@ function loadTableWithDocument(doc, mainTable)
         control.appendChild(winButton);
         control.appendChild(looseButton);
 
-        div.classList.add("playerRow");
         head.textContent = counter++;
         name.textContent = entry.data().name;
         points.textContent = entry.data().points;
@@ -376,4 +379,51 @@ function addGameParticipant(player, won)
             currentLosers.splice(0, currentLosers.length);
         }
     }
+}
+
+function updatePreviousGameTable(doc, single)
+{
+    var table = null
+    if(single)
+    {
+        table = singlesTable;
+    }
+    else
+    {return;    }
+
+    while(table.firstChild)
+    {
+        table.removeChild(table.firstChild);
+    }
+
+    doc.forEach(function(entry)
+    {
+        let row = document.createElement('tr');
+        let winner = document.createElement('td');
+        let loser = document.createElement('td');
+        let probability = document.createElement('td');
+        let exchange = document.createElement('td');
+
+
+        winner.textContent = entry.data().winner;
+        loser.textContent = entry.data().loser;
+        probability.textContent = entry.data().winnerExpectations;
+        exchange.textContent = entry.data().winnerGain;
+
+
+        row.classList.add('d-flex');
+        winner.classList.add('w-25');
+        loser.classList.add('w-25');
+        probability.classList.add('w-25');
+        exchange.classList.add('w-25');
+        row.appendChild(winner);
+        row.appendChild(loser);
+        row.appendChild(probability);
+        row.appendChild(exchange);
+        table.appendChild(row);
+    });
+    
+
+
+
 }
