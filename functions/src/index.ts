@@ -20,6 +20,7 @@ export const calculateDoubleMatch = functions.firestore.document('GameRequestsDo
     losses:number;
     streak:number;
     maxStreak:number;
+    pointGain:number;
     constructor(name:string, won:boolean)
     {
       this.name = name;
@@ -29,6 +30,7 @@ export const calculateDoubleMatch = functions.firestore.document('GameRequestsDo
       this.losses = 0;
       this.streak = 0;
       this.maxStreak = 0;
+      this.pointGain = 0;
     }
   }
 
@@ -145,10 +147,10 @@ export const calculateDoubleMatch = functions.firestore.document('GameRequestsDo
     const loser2Addition = Math.round(loserDeduction * 2 * (losers[0].points / losingTeamPoints));
     console.log("Winner split: Winner1: " + winner1Addition + " Winner2: "+ winner2Addition);
     console.log("Loser split: Loser1: " + loser1Addition + " Loser2: "+ loser2Addition);
-    winners[0].points += winner1Addition;
-    winners[1].points += winner2Addition;
-    losers[0].points += loser1Addition;
-    losers[1].points += loser2Addition;
+    winners[0].pointGain = winner1Addition;
+    winners[1].pointGain = winner2Addition;
+    losers[0].pointGain = loser1Addition;
+    losers[1].pointGain = loser2Addition;
 
     console.log("Doubles endning log:");
     const innerPromises = [];
@@ -158,12 +160,14 @@ export const calculateDoubleMatch = functions.firestore.document('GameRequestsDo
       
       console.log("Player: " + player.name + " Points: "+ player.points + " Won: " + player.won);
       innerPromises.push(currentPlayer.update({
-        points: player.points,
+        points: player.points + player.pointGain,
         wins: player.wins,
         losses: player.losses,
         notPlayedFor: 0,
         currentStreak: player.streak, 
-        maxStreak : player.maxStreak
+        maxStreak : player.maxStreak,
+        lastResult: player.won,
+        pointGain: player.pointGain
       })
       .catch(err => console.log(err)));
     }
@@ -360,7 +364,9 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
         lastOpponent: loser,
         notPlayedFor: 0,
         currentStreak: winnerStreak, 
-        maxStreak : winnerMaxStreak
+        maxStreak : winnerMaxStreak,
+        lastResult : true,
+        pointGain : winnerAddition
     })
     .catch(err => console.log(err)));
     innerPromises.push(losingPlayer.update({
@@ -368,7 +374,9 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
         losses: losingLosses,
         lastOpponent: winner,
         notPlayedFor: 0,
-        currentStreak: 0
+        currentStreak: 0,
+        lastResult: false,
+        pointGain : loserDeduction
     })
     .catch(err => console.log(err)));
     innerPromises.push(gameInfo.update({
