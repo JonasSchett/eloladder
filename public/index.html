@@ -48,7 +48,7 @@
         </form>
       </div>
     </nav>
-    <table id = "mainTable" class="table table-dark table-striped table-hover table-borderless">
+    <table id = "mainTable" class="table table-dark table-striped table-hover">
       <thead class = "thead-dark">
         <tr class="d-flex flex-wrap">
           <th scope="col" class = "col-1">#</th>
@@ -66,7 +66,16 @@
       </tbody>
     </table>
     <hr>
-      
+    <div class = "text-light table-key">
+      <h1 class = "mx-2">Table-Key</h1>
+      <ul>
+        <li>To switch between entering singles or doubles, use the buttons in the header</li>
+        <li>To enter a game press the <button class = "btn btn-sm btn-success">Won</button> button on the player who won and the <button class = "btn btn-sm btn-danger">Lost</button> button on the player who lost. It is the same for doubles, but you have to press a total of 4 buttons</li>
+        <li>The current ELO score is displayed in the "<span class = "bolded">Points</span>" column. The small number is the gain or loss from the most recent game for that player</li>
+        <li>The name coloured in <span class = "champion">this colour</span> is the current champion, beat them and you will get it</li>
+        <li>The number displayed in the "<span class = "bolded">prev</span>" column will display the rank according to the previous table</li>
+      </ul>
+    </div>
     <div class="d-flex flex-wrap">
       
       <!-- <div class="p-2 w-100">

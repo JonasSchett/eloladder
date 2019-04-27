@@ -39,6 +39,15 @@ body {
     color: #ea1c2c;
 }
 
+.table-key{
+    background: #212529;
+    line-height: 200%;
+}
+
+.bolded{
+    font-weight: 800;
+}
+
 #headingGroup span{
     color: #ea1c2c;
 }
