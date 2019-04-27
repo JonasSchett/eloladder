@@ -213,7 +213,20 @@ export const playerAdded = functions.firestore.document('PlayerAddRequests/{user
 
   const players = admin.firestore().collection("Players")
   const playerToAdd = players.doc(name);
-  playerToAdd.get().then(doc =>{
+  let playersLength = 100;
+  let firstPlayer = false;
+  // first, get the length of the players to 
+  // calculate the prevRank
+  players.get().then(playersData =>{
+    playersLength = playersData.size;
+    if(playersLength === 0)
+    {
+      firstPlayer = true;
+    }
+  })
+  .catch(err => console.log(err))
+  .then( x =>{
+    playerToAdd.get().then(doc =>{
       if(doc.exists)
       {
         return null;
@@ -228,13 +241,20 @@ export const playerAdded = functions.firestore.document('PlayerAddRequests/{user
           currentStreak: 0,
           maxStreak: 0,
           lastOpponent: '',
-          notPlayedFor: 0
+          notPlayedFor: 0,
+          prevRank: playersLength + 1,
+          pointGain: 0,
+          lastResult: false,
+          isChampion: firstPlayer
         })
         .catch(err => console.log(err));
         return;
       }
+    })
+    .catch(err => console.log(err));
   })
   .catch(err => console.log(err));
+  
   return snap.ref.set({
     name: name,
     added:"Player was successfully added"
@@ -266,6 +286,8 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
   let loserLastOpponent = '';
   let winnerStreak = 0;
   let winnerMaxStreak = 0;
+  let loserIsChampion = false;
+  let winnerIsChampion = false;
 
   let n = 0;
   let k = 0;
@@ -273,6 +295,9 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
   let decayCalculationFactor = 100;
   let decayCutoffGames = 0;
   let decayPoints = 0;
+
+  let winnerPrevRank = 0;
+  let loserPrevRank = 0;
   // players.doc(winner).get().then(doc =>{
   //   if(doc.exists){
   //   }
@@ -291,6 +316,8 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
           winnerLastOpponent = data.lastOpponent;
           winnerStreak = data.currentStreak;
           winnerMaxStreak = data.maxStreak;
+          winnerPrevRank = data.prevRank;
+          winnerIsChampion = data.isChampion;
         }
       }
     })
@@ -308,6 +335,8 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
           losingPoints = data.points;
           losingLosses = data.losses + 1;
           loserLastOpponent = data.lastOpponent;
+          loserIsChampion = data.isChampion;
+          loserPrevRank = data.prevRank;
         }
       }
     })
@@ -341,6 +370,13 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
     {
       return;
     }
+    //update the old table with the old rules
+    //calculateOldTable(players,winner);
+    if(loserPrevRank < winnerPrevRank)
+    {
+      calculateOldTable(players,winnerPrevRank);
+      winnerPrevRank -= 1;
+    }
 
     gamesPlayed = gamesPlayed + 1;
     const x  = winningPoints - losingPoints;
@@ -349,9 +385,12 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
     const loserExpected = 1-winnerExpected;
     const winnerAddition = Math.round(k * (1-winnerExpected));
     const loserDeduction = Math.round(k * (0-loserExpected));
+    
+    //Need to see if the winner will remain/become champion
+    const makeWinnerChampion = loserIsChampion || winnerIsChampion;
 
     console.log("Winneraddition: "+ winnerAddition+" LoserDeduction: "+loserDeduction);
-
+    console.log("Loser is champion: " + loserIsChampion + " Winner is champion: "+ winnerIsChampion);
     winningPoints = winningPoints + winnerAddition;
     losingPoints = losingPoints + loserDeduction;
     winnerStreak += 1;
@@ -366,7 +405,9 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
         currentStreak: winnerStreak, 
         maxStreak : winnerMaxStreak,
         lastResult : true,
-        pointGain : winnerAddition
+        pointGain : winnerAddition,
+        isChampion : makeWinnerChampion,
+        prevRank : winnerPrevRank
     })
     .catch(err => console.log(err)));
     innerPromises.push(losingPlayer.update({
@@ -376,7 +417,8 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
         notPlayedFor: 0,
         currentStreak: 0,
         lastResult: false,
-        pointGain : loserDeduction
+        pointGain : loserDeduction,
+        isChampion : false,
     })
     .catch(err => console.log(err)));
     innerPromises.push(gameInfo.update({
@@ -395,6 +437,7 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
       })
       .catch(err => console.log(err)));
 
+    
     //update not played for value of players
     // we need to loop through every player,
     // count up and update our games
@@ -406,6 +449,26 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
     timeStamp: new Date().getTime()
     });
 });
+
+function calculateOldTable(players : FirebaseFirestore.CollectionReference, winnerOldRank:number)
+{
+  const player = players.where("prevRank", "==", winnerOldRank - 1);
+  let playerAboveWinner = "";
+  player.get()
+  .then(playerData =>{
+    playerData.forEach(doc =>{
+      playerAboveWinner = doc.data().name;
+    })
+  })
+  .catch(err => console.log(err))
+  .then(x =>{
+    players.doc(playerAboveWinner).update({
+      prevRank: winnerOldRank
+    })
+    .catch(err => console.log(err));
+  })
+  .catch(err => console.log(err));
+}
 
 function calculateDecay(players : FirebaseFirestore.CollectionReference, decayCutoffGames:number, decayPoints:number){
   const decayPlayersArray:{

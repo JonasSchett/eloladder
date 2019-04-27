@@ -23,6 +23,21 @@ body {
     transition: background 1s;
 
 }
+.debug{
+    background-color: #1c87ea
+}
+
+.champion{
+    color: #ffdd48;
+    font-weight: 800;
+}
+
+.lastGameWin{
+    color: #5cb85c;
+}
+.lastGameLoss{
+    color: #ea1c2c;
+}
 
 #headingGroup span{
     color: #ea1c2c;

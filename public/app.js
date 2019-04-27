@@ -282,57 +282,82 @@ function loadTableWithDocument(doc, mainTable)
         let row = document.createElement('tr');
         let head = document.createElement('th');
         let name = document.createElement('td');
+
+        // create point display for player
         let points = document.createElement('td');
+        let pointsFull = document.createElement('span');
+        let pointChange = document.createElement('span');
+
         let wins = document.createElement('td');
         let losses = document.createElement('td');
         let streak = document.createElement('td');
         let lastOpponent = document.createElement('td');
 
         let control = document.createElement('td');
+        let prevRank = document.createElement('td');
         let winButton = document.createElement('button');
-        let looseButton = document.createElement('button');
+        let loseButton = document.createElement('button');
 
-        row.classList.add('d-flex')
+        row.classList.add('d-flex', 'flex-row')
         // //create width definition here:
         head.classList.add('col-1');
-        name.classList.add('col-2');
+        name.classList.add('col-3');
+
+        // set up point display
         points.classList.add('col-2', 'col-sm-1');
-        wins.classList.add('col-sm-1');
-        losses.classList.add('col-sm-1');
-        streak.classList.add('col-md-1');
-        lastOpponent.classList.add('col-xl-1');
-        control.classList.add('col-6', 'col-md-3', 'col-xl-2');
-
-
-
-        winButton.classList.add('btn', 'btn-success', 'mx-1', 'col-auto');
-        if(doubles)
+        if(entry.data().lastResult)
         {
-            winButton.textContent = "Won"
+            pointChange.classList.add('lastGameWin', 'small');
+            pointChange.textContent = "(+"+entry.data().pointGain+")";
         }
         else
         {
-            winButton.textContent = "Won"
+            pointChange.classList.add('lastGameLoss', 'small');
+            pointChange.textContent = "("+entry.data().pointGain+")";
         }
+        pointsFull.textContent = entry.data().points + " ";
         
+        
+
+        wins.classList.add('col-sm-1');
+        losses.classList.add('col-sm-2', 'col-md-1');
+        streak.classList.add('col-md-1');
+        lastOpponent.classList.add('col-xl-1');
+        prevRank.classList.add('col-2', 'col-sm-1');
+        control.classList.add('col-4', 'col-sm-3', 'col-xl-2'); //'col-md-3', 'col-xl-2', 'd-flex', 'flex-row');
+        //control.classList.add('debug');
+
+
+        // set up logic for win- and losebuttons
+        winButton.classList.add('btn', 'btn-success', 'btn-sm', 'w-50');
+        winButton.textContent = "Won";
         winButton.addEventListener('click', function(){
             addGameParticipant(entry.data().name, true);
         });
-        looseButton.classList.add('btn', 'btn-danger', 'mx-1', 'col-auto');
-        looseButton.textContent = "Lost";
-        looseButton.addEventListener('click', function(){
+        loseButton.classList.add('btn', 'btn-danger', 'btn-sm', 'w-50');
+        loseButton.textContent = "Lost";
+        loseButton.addEventListener('click', function(){
             addGameParticipant(entry.data().name, false);
         });
         control.appendChild(winButton);
-        control.appendChild(looseButton);
+        control.appendChild(loseButton);
 
         head.textContent = counter++;
         name.textContent = entry.data().name;
-        points.textContent = entry.data().points;
+
+        points.appendChild(pointsFull);
+        points.appendChild(pointChange);
+
         wins.textContent = entry.data().wins;
         losses.textContent = entry.data().losses;
         streak.textContent = entry.data().currentStreak;
         lastOpponent.textContent = entry.data().lastOpponent;
+        prevRank.textContent = entry.data().prevRank;
+
+        if(entry.data().isChampion)
+        {
+            name.classList.add('champion');
+        }
 
         wins.classList.add('d-none', 'd-sm-table-cell');
         losses.classList.add('d-none', 'd-sm-table-cell');
@@ -346,6 +371,7 @@ function loadTableWithDocument(doc, mainTable)
         row.appendChild(losses);
         row.appendChild(streak);
         row.appendChild(lastOpponent);
+        row.appendChild(prevRank);
         row.appendChild(control);
 
         mainTable.appendChild(row);
