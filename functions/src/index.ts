@@ -1,6 +1,8 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import * as helper from './helper-functions'
 admin.initializeApp();
+
 
 // Start writing Firebase Functions
 // https://firebase.google.com/docs/functions/typescript
@@ -12,6 +14,11 @@ export const calculateDoubleMatch = functions.firestore.document('GameRequestsDo
       return null;
   }
 
+  // player class used for every player
+  // this stores points and is simpler to use in a more than
+  // two player setup, the rest works as in the singles match
+  // except for the elo calculation,
+  // the elo here uses the sum of both players as a baseline
   class Player {
     name:string;
     won:boolean;
@@ -34,6 +41,7 @@ export const calculateDoubleMatch = functions.firestore.document('GameRequestsDo
     }
   }
 
+  // general values used for calculation elo score etc
   let n = 0;
   let k = 0;
   let gamesPlayed = 0;
@@ -62,6 +70,7 @@ export const calculateDoubleMatch = functions.firestore.document('GameRequestsDo
 
   const promises = [];
 
+  // get data for each player
   console.log("Doubles beginning log:");
   for(const player of allPlayers)
   {
@@ -141,10 +150,10 @@ export const calculateDoubleMatch = functions.firestore.document('GameRequestsDo
     // the person with more gains less in case of a win
 
     // Below is some logging of the split among winner and loser
-    const winner1Addition = Math.round(winnerAddition * 2 * (winners[1].points / winningTeamPoints));
-    const winner2Addition = Math.round(winnerAddition * 2 * (winners[0].points / winningTeamPoints));
-    const loser1Addition = Math.round(loserDeduction * 2 * (losers[1].points / losingTeamPoints));
-    const loser2Addition = Math.round(loserDeduction * 2 * (losers[0].points / losingTeamPoints));
+    const winner1Addition = Math.round(winnerAddition * (winners[1].points / winningTeamPoints));
+    const winner2Addition = Math.round(winnerAddition * (winners[0].points / winningTeamPoints));
+    const loser1Addition = Math.round(loserDeduction * (losers[0].points / losingTeamPoints));
+    const loser2Addition = Math.round(loserDeduction * (losers[1].points / losingTeamPoints));
     console.log("Winner split: Winner1: " + winner1Addition + " Winner2: "+ winner2Addition);
     console.log("Loser split: Loser1: " + loser1Addition + " Loser2: "+ loser2Addition);
     winners[0].pointGain = winner1Addition;
@@ -193,7 +202,7 @@ export const calculateDoubleMatch = functions.firestore.document('GameRequestsDo
     .catch(err => console.log(err)));
 
     //calculate decay
-    decayPreparation(innerPromises,players,gamesPlayed,decayCalculationFactor,decayCutoffGames,decayPoints);
+    helper.decayPreparation(innerPromises,players,gamesPlayed,decayCalculationFactor,decayCutoffGames,decayPoints);
   })
   .catch(err => console.log(err));
   return snap.ref.update({
@@ -245,7 +254,10 @@ export const playerAdded = functions.firestore.document('PlayerAddRequests/{user
           prevRank: playersLength + 1,
           pointGain: 0,
           lastResult: false,
-          isChampion: firstPlayer
+          isChampion: firstPlayer,
+          currentDecay: 0,
+          totalDecay: 0,
+          frozen: false
         })
         .catch(err => console.log(err));
         return;
@@ -261,33 +273,58 @@ export const playerAdded = functions.firestore.document('PlayerAddRequests/{user
     }, {merge: true});
 });
 
-export const scriptUpdated = functions.firestore.document('GameRequests/{userId}').onCreate((snap,context) =>{
+export const calculateSingleMatch = functions.firestore.document('GameRequests/{userId}').onCreate((snap,context) =>{
   const snapData = snap.data();
   if(snapData === undefined)
   {
       return null;
   }
 
+  // initial gathering of data references of winner and loser
   const winner = snapData.winner;
   const loser = snapData.loser;
   
+  // getting data from the 'Players' collection
+  // and the 'information' collection as that 
+  // is where relevant variables as well
+  // as the player data is stored
   const players = admin.firestore().collection('Players');
   const info = admin.firestore().collection('information');
-  //var winningPoints = 0;
+
+  // get links to the document we can read 
+  // this accesses the winner and loser document in the database
   const winningPlayer = players.doc(winner);
   const losingPlayer = players.doc(loser);
+
+  // get the gameInformation document within the information collection
   const gameInfo = info.doc('gameInformation');
 
+  // initialisation of points and values required for calculation
   let winningPoints = 0;
   let losingPoints = 0;
+
+  // wins of winner and loser
   let winningWins = 0;
   let losingLosses = 0;
+
+  // last opponents of winner and loser
   let winnerLastOpponent = '';
   let loserLastOpponent = '';
+
+  // streak and max streak of winner as they could be changed
   let winnerStreak = 0;
   let winnerMaxStreak = 0;
+
+  // see if the winner or loser are champion for transfer of title
   let loserIsChampion = false;
   let winnerIsChampion = false;
+
+  // n and k values used for the calculation
+  // as well as more values required
+  // gamesPlayed - total number of games played ever
+  // decayCalculationFactor - after how many games decay is calculated
+  // decayCutoffGames - number of games from which a player has to be absent in order to be hit by decay
+  // decayPoints - average number of points given by each player hit by decay
 
   let n = 0;
   let k = 0;
@@ -296,13 +333,12 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
   let decayCutoffGames = 0;
   let decayPoints = 0;
 
+  // winnerPrevRank - previous rank of winner in alternative table rules
+  // loserPrevRank - same as above for loser
   let winnerPrevRank = 0;
   let loserPrevRank = 0;
-  // players.doc(winner).get().then(doc =>{
-  //   if(doc.exists){
-  //   }
-  // });
-  //get winning player points
+
+  //get winning player data
   const promises = [];
   promises.push(winningPlayer.get()
     .catch(err => console.log(err))
@@ -324,7 +360,7 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
     .catch(err => console.log(err))
   );
 
-  //get losing player points
+  //get losing player data
   promises.push(losingPlayer.get()
     .catch(err => console.log(err))
     .then(doc => {
@@ -363,6 +399,7 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
     .catch(err => console.log(err))
   );
 
+  // wait for all previous reads to finish before starting the calculation
   Promise.all(promises)
   .catch(err => console.log(err))
   .then((e) =>{
@@ -370,15 +407,17 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
     {
       return;
     }
-    //update the old table with the old rules
-    //calculateOldTable(players,winner);
+    //update the alternative table with alternative rules
     if(loserPrevRank < winnerPrevRank)
     {
-      calculateOldTable(players,winnerPrevRank);
+      helper.calculateOldTable(players,winnerPrevRank);
       winnerPrevRank -= 1;
     }
 
+    // update total number of games played
     gamesPlayed = gamesPlayed + 1;
+
+    // Elo calculations
     const x  = winningPoints - losingPoints;
     const exponent = -(x/n);
     const winnerExpected = 1/(1+Math.pow(10,exponent));
@@ -391,11 +430,15 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
 
     console.log("Winneraddition: "+ winnerAddition+" LoserDeduction: "+loserDeduction);
     console.log("Loser is champion: " + loserIsChampion + " Winner is champion: "+ winnerIsChampion);
+
+    // create resulting points
     winningPoints = winningPoints + winnerAddition;
     losingPoints = losingPoints + loserDeduction;
+    // streak of winner is updated
     winnerStreak += 1;
     winnerMaxStreak = winnerStreak > winnerMaxStreak ? winnerStreak : winnerMaxStreak;
 
+    // update files and documents on database
     const innerPromises = [];
     innerPromises.push(winningPlayer.update({
         points: winningPoints,
@@ -436,12 +479,10 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
       info:"Game was calculated, all data added"
       })
       .catch(err => console.log(err)));
-
     
-    //update not played for value of players
-    // we need to loop through every player,
-    // count up and update our games
-    decayPreparation(innerPromises,players,gamesPlayed,decayCalculationFactor,decayCutoffGames,decayPoints);
+
+    // finally we need to do decay preparation and check if we actually start calculating decay
+    helper.decayPreparation(innerPromises,players,gamesPlayed,decayCalculationFactor,decayCutoffGames,decayPoints);
   })
   .catch(err => console.log(err));
   return snap.ref.update({
@@ -449,191 +490,3 @@ export const scriptUpdated = functions.firestore.document('GameRequests/{userId}
     timeStamp: new Date().getTime()
     });
 });
-
-function calculateOldTable(players : FirebaseFirestore.CollectionReference, winnerOldRank:number)
-{
-  const player = players.where("prevRank", "==", winnerOldRank - 1);
-  let playerAboveWinner = "";
-  player.get()
-  .then(playerData =>{
-    playerData.forEach(doc =>{
-      playerAboveWinner = doc.data().name;
-    })
-  })
-  .catch(err => console.log(err))
-  .then(x =>{
-    players.doc(playerAboveWinner).update({
-      prevRank: winnerOldRank
-    })
-    .catch(err => console.log(err));
-  })
-  .catch(err => console.log(err));
-}
-
-function calculateDecay(players : FirebaseFirestore.CollectionReference, decayCutoffGames:number, decayPoints:number){
-  const decayPlayersArray:{
-    notPlayedFor:number,
-    currentPoints:number,
-    name:string}[] = [];
-  const gainingPlayersArray:{
-    notPlayedForInverted:number,
-    currentPoints:number,
-    name:string}[] = [];
-
-  const decayPlayers = players.where("notPlayedFor", ">", decayCutoffGames);
-  const gainingPlayers = players.where("notPlayedFor", "<=", decayCutoffGames);
-
-  const individualDecay:number[] = [];
-  const individualGains:number[] = [];
-
-  const promises = [];
-  promises.push(decayPlayers.get()
-  .then(decayPlayersData =>{
-    decayPlayersData.forEach(player =>{
-        // console.log("decay: " + player.data().name);
-        decayPlayersArray.push({
-            name: player.data().name,
-            notPlayedFor: player.data().notPlayedFor,
-            currentPoints: player.data().points,
-        });
-    });
-  })
-  .catch(err => console.log(err)));
-
-  promises.push(gainingPlayers.get()
-  .then(gainingPlayersData =>{
-    gainingPlayersData.forEach(player =>{
-      // console.log("gain: " + player.data().name);
-      gainingPlayersArray.push({
-          name: player.data().name,
-          notPlayedForInverted: decayCutoffGames - player.data().notPlayedFor,
-          currentPoints: player.data().points,
-      });
-    });
-  })
-  .catch(err => console.log(err)));
-
-  Promise.all(promises)
-  .then((e) =>{
-    
-
-    if(decayPlayersArray.length === 0 || decayPoints === 0)
-    {
-      console.log("aborting decay calculation");
-      return;
-    }
-
-    console.log("calculating decay points");
-    console.log("DecayPoints: " + decayPoints + " DecayCutoff: "+ decayCutoffGames);
-    console.log(gainingPlayersArray);
-    console.log(decayPlayersArray);
-    
-    // calculate all losses
-    let totalNotPlayedFor = 0;
-    const totalDecay = decayPoints * decayPlayersArray.length;
-    let totalActualDecay = 0;
-    for(const decayPlayer of decayPlayersArray)
-    {
-      totalNotPlayedFor += decayPlayer.notPlayedFor;
-    }
-
-    // console.log("Total decay not played for: " + totalNotPlayedFor);
-
-    for(const decayPlayer of decayPlayersArray)
-    {
-      const percentage = decayPlayer.notPlayedFor/totalNotPlayedFor;
-      // console.log(decayPlayersArray[i].name + ": " + percentage);
-      const decayLosses = Math.round(percentage * totalDecay);
-      totalActualDecay += decayLosses;
-      decayPlayer.currentPoints -= decayLosses;
-      individualDecay.push(decayLosses);
-      //update database
-      const currentPlayer = players.doc(decayPlayer.name);
-      currentPlayer.update({
-          points: decayPlayer.currentPoints
-      })
-      .catch(err => console.log(err)); 
-    }
-
-    // calculate all gains
-    let totalInvertedNotPlayedFor = 0;
-    const totalGains = totalActualDecay;
-    let totalActualGains = 0;
-
-    // console.log("Total gains: " + totalGains);
-
-    for(const gainingPlayer of gainingPlayersArray)
-    {
-        totalInvertedNotPlayedFor += gainingPlayer.notPlayedForInverted; 
-    }
-
-    // console.log("Total inverted not played for: " + totalInvertedNotPlayedFor);
-
-    for(const gainingPlayer of gainingPlayersArray)
-    {
-      const percentage = gainingPlayer.notPlayedForInverted/totalInvertedNotPlayedFor;
-      const decayGains = Math.round(percentage * totalGains);
-      totalActualGains += decayGains;
-      gainingPlayer.currentPoints += decayGains;
-      individualGains.push(decayGains);
-      // console.log(gainingPlayersArray[i].name + ": " + percentage);
-      //update database
-      const currentPlayer = players.doc(gainingPlayer.name);
-      currentPlayer.update({
-          points: gainingPlayer.currentPoints
-      })
-      .catch(err => console.log(err));
-    }
-
-    console.log("Total Gains: "  + totalActualGains  + " Total decay: " + totalActualDecay);
-    console.log(individualGains);
-    console.log(individualDecay);
-
-    // check if there are no runding errors, and if there are, adjust for them
-    if(totalActualGains !== totalActualDecay){ 
-      const difference = totalActualDecay - totalActualGains;
-      console.log("There is a difference in gains and decay, adjusting: " + difference);
-      // give difference to random player
-      const luckyPick = gainingPlayersArray[0];
-
-      players.doc(luckyPick.name).update({
-          points: luckyPick.currentPoints + difference
-      })
-      .catch(err => console.log(err));
-    }
-  })
-  .catch(err => console.log(err));
-}
-
-function decayPreparation(promises: Promise<void | FirebaseFirestore.WriteResult>[], 
-                          players:FirebaseFirestore.CollectionReference, 
-                          gamesPlayed:number, 
-                          decayCalculationFactor:number,
-                          decayCutoffGames:number,
-                          decayPoints:number)
-{
-  Promise.all(promises)
-    .then(function(){
-      let totalScore = 0;
-      players.get()
-      .then(allPlayers =>{
-        allPlayers.forEach(player =>{
-          totalScore += player.data().points;
-          players.doc(player.data().name)
-          .update({
-              notPlayedFor: player.data().notPlayedFor + 1
-          })
-          .catch(err => console.log(err))
-        });
-      })
-      .catch(err => console.log(err))
-      .then(function(){
-          console.log("Current total score: " + totalScore);
-          if(gamesPlayed % decayCalculationFactor === 0){
-              calculateDecay(players, decayCutoffGames, decayPoints);
-          }
-      })
-      .catch(err => console.log(err));
-    })
-    .catch(err => console.log(err));
-}

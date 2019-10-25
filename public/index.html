@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -54,14 +55,14 @@
       <thead class = "thead-dark">
         <tr class="d-flex flex-wrap">
           <th scope="col" class = "col-1">#</th>
-          <th scope="col" class ="col-3">Name</th>
+          <th scope="col" class ="col-3 col-sm-2">Name</th>
           <th scope="col" class="col-2 col-sm-1">Points</th>
-          <th scope="col" class = "col-sm-1 d-none d-sm-table-cell">Wins</th>
-          <th scope="col" class = "col-sm-2 col-md-1 d-none d-sm-table-cell">Losses</th>
+          <th scope="col" class = "col-sm-1 d-none d-sm-table-cell">W</th>
+          <th scope="col" class = "col-sm-1 d-none d-sm-table-cell">L</th>
           <th scope="col" class = "col-md-1 d-none d-md-table-cell">Streak</th>
-          <th scope="col" class = "col-xl-1 d-none d-xl-table-cell">Last opponent</th>
+          <th scope="col" class = "col-sm-2 col-xl-1 d-none d-sm-table-cell">Last opponent (singles)</th>
           <th scope="col" class = "col-2 col-sm-1">prev</th>
-          <th scope="col" class = "col-4 col-sm-3 col-xl-2" id="controlArea">Single</th>
+          <th scope="col" class = "col-4 col-sm-3 col-md-2" id="controlArea">Singles</th>
         </tr>
       </thead>
       <tbody id="mainTableBody">
@@ -76,19 +77,21 @@
         <li>The current ELO score is displayed in the "<span class = "bolded">Points</span>" column. The small number is the gain or loss from the most recent game for that player</li>
         <li>The name coloured in <span class = "champion">this colour</span> is the current champion, beat them and you will be the new champion</li>
         <li>The number displayed in the "<span class = "bolded">prev</span>" column will display the rank according to the previous table</li>
+        <li>The numbers displayed next to the points are gains from the previous match and points gained or lost due to decay</li>
       </ul>
     </div>
     <div class="d-flex flex-wrap">
       
-      <!-- <div class="p-2 w-100">
+      <div class="p-2 w-100">
         <h1>Past single matches</h1>
         <table id = "singlesTable" class="table table-dark table-striped table-hover table-borderless">
           <thead class = "thead-dark">
             <tr class="d-flex">
+              <th scope="col" class="d-none d-lg-table-cell w-25 w-25 flex-shrink-1" >Date</th>
               <th scope="col" class="w-25 flex-shrink-1" >Winner</th>
               <th scope="col" class="w-25 flex-shrink-1">Loser</th>
               <th scope="col" class="w-25 flex-shrink-1">Outcome probability</th>
-              <th scope="col" class="w-25 flex-shrink-1">Point exchange</th>
+              <th scope="col" class="d-none d-lg-table-cell w-25 flex-shrink-1">Point exchange</th>
             </tr>
           </thead>
           <tbody id="singlesTableBody">
@@ -100,16 +103,18 @@
         <table id = "doublesTable" class="table table-dark table-striped table-hover table-borderless">
           <thead class = "thead-dark">
             <tr class="d-flex">
-              <th scope="col" class="w-25 flex-shrink-1">Winner</th>
-              <th scope="col" class="w-25 flex-shrink-1">Loser</th>
+              <th scope="col" class="d-none d-lg-table-cell w-25 w-25 flex-shrink-1" >Date</th>
+              <th scope="col" class="w-25 flex-shrink-1">Winners</th>
+              <th scope="col" class="w-25 flex-shrink-1">Losers</th>
               <th scope="col" class="w-25 flex-shrink-1">Outcome probability</th>
-              <th scope="col" class="w-25 flex-shrink-1">Point exchange</th>
+              <th scope="col" class="d-none d-lg-table-cell w-25 w-25 flex-shrink-1">Point exchange</th>
             </tr>
           </thead>
           <tbody id="doublesTableBody">
           </tbody>
         </table>
-      </div> -->
+      </div>
+      
     </div>
     
     <script src="app.js">
