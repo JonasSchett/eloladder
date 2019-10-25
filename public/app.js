@@ -1,8 +1,10 @@
+// Javascript file responsible for handling user inputs and displaying data
 var doubles = false;
 
 var currentWinners = [];
 var currentLosers = [];
 
+// selectors for main objects on page
 const mainTable = document.querySelector("#mainTableBody");
 const singlesTable = document.querySelector("#singlesTableBody");
 const doublesTable = document.querySelector("#doublesTableBody");
@@ -25,6 +27,7 @@ document.addEventListener("DOMContentLoaded", event => {
     });
 
     // waits for changes in the database and updates table if any change happens
+    // will update any changes in real time
     db.collection("Players").orderBy("points", "desc").onSnapshot(doc =>{
         loadTableWithDocument(doc, mainTable);
     });
@@ -38,10 +41,14 @@ document.addEventListener("DOMContentLoaded", event => {
     });
 });
 
+// login form, just asks for password
 const loginForm = document.querySelector("#loginForm");
 
 loginForm.addEventListener('submit', (e) =>{
     e.preventDefault();
+
+    // note that this just asks for a password as the email is provided below,
+    // !the email and password combination will have to be set up in firebase!
     firebase.auth().signInWithEmailAndPassword('loginuser@tablefootball.com', loginForm.password.value).catch(function(error) {
         // Handle Errors here.
         var errorCode = error.code;
@@ -55,10 +62,32 @@ loginForm.addEventListener('submit', (e) =>{
     loginForm.password.value = '';
 });
 
-// function to check
-// if a game is valid,
-// how many points will be exchanged
+// buttons to switch between singles and doubles
+const singlesButton = document.querySelector("#singles");
+const doublesButton = document.querySelector("#doubles");
+
+singlesButton.addEventListener("click", (e) =>{
+    e.preventDefault();
+    changeDoubles(false);
+});
+doublesButton.addEventListener("click", (e) =>{
+    e.preventDefault();
+    changeDoubles(true);
+});
+
+function changeDoubles(activateDoubles)
+{
+    doubles = activateDoubles;
+    firebase.firestore().collection("Players").orderBy("points", "desc").get().then(doc =>{
+        loadTableWithDocument(doc, mainTable);
+    });
+    const controlArea = document.querySelector('#controlArea');
+    controlArea.textContent = doubles ? "Doubles" : "Singles";
+}
+
+// function to check if a game is valid, how many points will be exchanged
 // also exchanges points and updates players
+// although this function prechecks if a game is valid, this will be double checked on the cloud functions
 function checkGame(winner, loser){
     if((winner != undefined) && (loser != undefined) && (winner != loser) && confirm("Did " + winner + " defeat " + loser + "?"))
     {
@@ -129,6 +158,7 @@ function checkGame(winner, loser){
     return false;
 }
 
+// same as checkGame except for doubles
 function checkGameDoubles(winners, losers)
 {
     // make sure last two players are in array
@@ -165,93 +195,10 @@ function checkGameDoubles(winners, losers)
         });
         return true;
     }
-
-
-    
-
-    if((winner != undefined) && (loser != undefined) && (winner != loser) && confirm("Did " + winner + " defeat " + loser + "?"))
-    {
-        var db = firebase.firestore();
-        var players = db.collection("Players");
-        var gameInfo = db.collection("information").doc("gameInformation");
-        var winningPlayer1 = players.doc(winner);
-        var losingPlayer1 = players.doc(loser);
-        //points of winning and losing player
-
-        //last opponents of winner/loser
-        var winnerLastOpponent = '';
-        var loserLastOpponent = '';
-
-        // get results from the database and wait for them to return promises
-        const promises = [];
-
-        //get winning player points
-        promises.push(winningPlayer1.get().then(doc => {
-            if(doc.exists){
-                winningPoints1 = doc.data().points;
-                winningWins1 = doc.data().wins + 1;
-                winnerLastOpponent = doc.data().lastOpponent;
-                winnerStreak = doc.data().currentStreak;
-                winnerMaxStreak = doc.data().maxStreak;
-            }
-        }));
-
-        //get losing player points
-        promises.push(losingPlayer1.get().then(doc => {
-            if(doc.exists){
-                losingPoints1 = doc.data().points;
-                losingLosses1 = doc.data().losses + 1;
-                loserLastOpponent = doc.data().lastOpponent;
-            }
-        }));
-
-        // after all promises have been received we can continue with the
-        // actual calculation of the program
-        Promise.all(promises).then((e) => {
-            //check if the game is actually valid from the data gathered:
-            // if it is invalid we return here, should a player manage to get past this,
-            // google functions will check for this again
-            if(loserLastOpponent == winner || winnerLastOpponent == loser)
-            {
-                alert('Each player has to play at least someone else, before playing again');
-                return;
-            }
-
-            // Send gamerequest to database
-            // calculation of scores will happen in google functions
-            db.collection("GameRequests").add({
-                winner: winner,
-                loser: loser
-            });
-        });
-        return true;
-    }
     return false;
 }
 
-const singlesButton = document.querySelector("#singles");
-const doublesButton = document.querySelector("#doubles");
-
-
-singlesButton.addEventListener("click", (e) =>{
-    e.preventDefault();
-    changeDoubles(false);
-});
-doublesButton.addEventListener("click", (e) =>{
-    e.preventDefault();
-    changeDoubles(true);
-});
-
-function changeDoubles(activateDoubles)
-{
-    doubles = activateDoubles;
-    firebase.firestore().collection("Players").orderBy("points", "desc").get().then(doc =>{
-        loadTableWithDocument(doc, mainTable);
-    });
-    const controlArea = document.querySelector('#controlArea');
-    controlArea.textContent = doubles ? "Doubles" : "Singles";
-}
-
+// function will fill the main table with data from database
 function loadTableWithDocument(doc, mainTable)
 {
     while(mainTable.firstChild)
@@ -375,6 +322,8 @@ function loadTableWithDocument(doc, mainTable)
     });
 }
 
+// function to add a game participant to a game
+// will be called when a button is clicked
 function addGameParticipant(player, won)
 {
     if(won)
@@ -404,6 +353,7 @@ function addGameParticipant(player, won)
     }
 }
 
+// updates the tables showing previous games
 function updatePreviousGameTable(doc, single)
 {
     var table = null
