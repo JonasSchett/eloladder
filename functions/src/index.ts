@@ -490,3 +490,68 @@ export const calculateSingleMatch = functions.firestore.document('GameRequests/{
     timeStamp: new Date().getTime()
     });
 });
+
+//function to initialise the database
+export const initialiseDatabase = functions.firestore.document('Initialisation/{name}').onCreate((snap, context) =>{
+  const snapData = snap.data();
+  if(snapData === undefined)
+  {
+      return null;
+  }
+  const information = admin.firestore().collection("information")
+  const playerAddRequests = admin.firestore().collection('PlayerAddRequests');
+  const authVerification = information.doc("authVerification");
+  const gameInformation = information.doc("gameInformation");
+  let firstPlayerName = snapData.name;
+  if(firstPlayerName === undefined)
+  {
+    firstPlayerName = "First Player, you can probably delete this"
+  }
+
+  playerAddRequests.doc().set({
+    name: firstPlayerName
+  })
+  .catch(err => console.log(err));
+
+  authVerification.get().then(doc =>{
+    if(doc.exists)
+    {
+      return null;
+    }
+    else
+    {
+      information.doc("authVerification").set({
+        info: "connected" 
+      })
+      .catch(err => console.log(err));
+      return;
+    }
+  })
+  .catch(err => console.log(err));
+
+  gameInformation.get().then(doc =>{
+    if(doc.exists)
+    {
+      return null;
+    }
+    else
+    {
+      information.doc("gameInformation").set({
+        decayCalculationFactor: 2,
+        decayCutoffGames: 8,
+        decayPoints: 0,
+        gamesPlayed: 0,
+        k: 40,
+        n: 400,
+      })
+      .catch(err => console.log(err));
+      return;
+    }
+  })
+  .catch(err => console.log(err));
+
+  return snap.ref.update({
+    info:"Database initialised",
+    timestamp : new Date().getTime()
+  })
+});

@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  	match /GameRequests/{document} {
+    	allow read, create: if isSignedIn() && getAuthorised();
+    }
+    match /GameRequestsDoubles/{document} {
+    	allow read, create: if isSignedIn() && getAuthorised();
+    }
+    match /PlayerAddRequests/{document} {
+    	allow read: if isSignedIn() && getAuthorised();
+    }
+    match /{document=**}{
+    	allow read: if isSignedIn() && getAuthorised();
+    }
+    function getAuthorised(){
+    	return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+  	}
+    function isSignedIn(){
+  		return request.auth != null;
+  	}
+  }
+}
+
+// other options to create rules below
+// allow read : combines get and list
+// allow get - single document read
+// allow list - collection read 
+// allow write - below three combined
+// allow create - create a document
+// allow update - update a document
+// allow delete - delete a document
+
+
+
+
