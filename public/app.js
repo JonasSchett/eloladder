@@ -17,12 +17,14 @@ const distinct = (value, index, self) =>
 document.addEventListener("DOMContentLoaded", event => {
     
     const db = firebase.firestore();
-    const authVerification = db.collection('information').doc('authVerification');
+    const pageInformation = db.collection('information').doc('pageInformation');
     // below is a continous stream
-    authVerification.onSnapshot(doc => {
+    pageInformation.onSnapshot(doc => {
         var data = doc.data();
         var connectionStatus = document.querySelector("#connectionStatus");
-        connectionStatus.textContent = data.info;
+        var mainTitle = document.querySelector('#mainTitle');
+        mainTitle.textContent = data.title;
+        connectionStatus.textContent = data.connectionStatus;
         connectionStatus.classList.add("connectionSuccess");
     });
 

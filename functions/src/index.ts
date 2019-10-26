@@ -520,8 +520,9 @@ export const initialiseDatabase = functions.firestore.document('Initialisation/{
     }
     else
     {
-      information.doc("authVerification").set({
-        info: "connected" 
+      information.doc("pageInformation").set({
+        connectionStatus: "connected", 
+        title: "Enter Your Title Here"
       })
       .catch(err => console.log(err));
       return;
