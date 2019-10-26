@@ -51,7 +51,7 @@ loginForm.addEventListener('submit', (e) =>{
 
     // note that this just asks for a password as the email is provided below,
     // !the email and password combination will have to be set up in firebase!
-    firebase.auth().signInWithEmailAndPassword('loginuser@tablefootball.com', loginForm.password.value).catch(function(error) {
+    firebase.auth().signInWithEmailAndPassword('loginuser@eloladder.com', loginForm.password.value).catch(function(error) {
         // Handle Errors here.
         var errorCode = error.code;
         var errorMessage = error.message;
