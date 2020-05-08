@@ -1,4 +1,5 @@
 {
   "projects": {
+    "default": "elo-ranking-ladder"
   }
 }
