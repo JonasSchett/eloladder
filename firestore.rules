@@ -8,7 +8,7 @@ service cloud.firestore {
     	allow read, create: if isSignedIn() && getAuthorised();
     }
     match /PlayerAddRequests/{document} {
-    	allow read: if isSignedIn() && getAuthorised();
+    	allow read, create: if isSignedIn() && getAuthorised();
     }
     match /{document=**}{
     	allow read: if isSignedIn() && getAuthorised();

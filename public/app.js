@@ -64,6 +64,30 @@ loginForm.addEventListener('submit', (e) =>{
     loginForm.password.value = '';
 });
 
+//Add player form to add new players
+const addPlayerForm = document.querySelector("#addPlayerForm");
+
+addPlayerForm.addEventListener('submit', (e) =>{
+    e.preventDefault();
+    var name = addPlayerForm.name.value;
+    var playerToAdd = firebase.firestore().collection("Players").doc(name);
+    playerToAdd.get().then(doc =>{
+        if(doc.exists)
+        {
+            alert("player already exists");
+        }
+        else
+        {
+            console.log("Attempting to add player " + name)
+            firebase.firestore().collection("PlayerAddRequests").add({
+                name:name
+            });
+        }
+    }).then((e)=>{
+        addPlayerForm.name.value = '';
+    });
+});
+
 // buttons to switch between singles and doubles
 const singlesButton = document.querySelector("#singles");
 const doublesButton = document.querySelector("#doubles");
