@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "elo-ranking-ladder"
-  }
+    "default": "table-football-league"
+  },
+  "targets": {}
 }
